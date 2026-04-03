@@ -3,11 +3,11 @@ from langchain_groq import ChatGroq
 from prompts.visualization_prompt import VISUALIZATION_PROMPT
 from app.config import GROQ_API_KEY # Adjust import based on your config location
 
-# Using the same fast model
+# Force JSON mode to prevent free-text responses
 llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name="llama-3.1-8b-instant"
-)
+).bind(response_format={"type": "json_object"})
 
 def generate_visualization_config(user_query, data):
     # Pass only the first 5 records to save tokens and context window

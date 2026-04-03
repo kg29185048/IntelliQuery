@@ -61,6 +61,7 @@ from bson import ObjectId
 from database.mongo_client import get_db
 from agents.router_agent import run_pipeline
 from agents.visualization_agent import generate_visualization_config
+from agents.schema_agent import get_schema
 
 # Custom JSON encoder to handle MongoDB ObjectIds
 class MongoJSONEncoder(json.JSONEncoder):
@@ -75,12 +76,31 @@ st.title("🧠 NL → MongoDB Query System")
 st.markdown("Ask a natural language question to search, insert, or visualize your MongoDB data.")
 
 # ==========================================
-# 🔥 NEW: INITIALIZE SESSION STATE MEMORY
+# INITIALIZE SESSION STATE MEMORY
 # ==========================================
 if "response" not in st.session_state:
     st.session_state.response = None
 if "current_query" not in st.session_state:
     st.session_state.current_query = ""
+
+# ==========================================
+# SIDEBAR: DATABASE SCHEMA EXPLORER
+# ==========================================
+with st.sidebar:
+    st.header("🗄️ Database Schema")
+    st.caption("All available collections and their fields.")
+    try:
+        db = get_db()
+        schema = get_schema(db)
+        if schema:
+            for collection, fields in schema.items():
+                with st.expander(f"📁 {collection} ({len(fields)} fields)"):
+                    for field in sorted(fields):
+                        st.markdown(f"- `{field}`")
+        else:
+            st.info("No collections found in the database.")
+    except Exception as e:
+        st.error(f"Could not load schema: {e}")
 
 # --- User Input ---
 query = st.text_input("Ask your question", placeholder="e.g. Show me all users, or Add Bob who is 30 years old")
@@ -90,7 +110,6 @@ if st.button("Run"):
     if not query:
         st.warning("Please enter a question first!")
     else:
-        db = get_db()
         with st.spinner("Processing request..."):
             # Save the result to session state so it survives button clicks
             st.session_state.response = run_pipeline(db, query)
@@ -131,9 +150,10 @@ if st.session_state.response:
         # =========================================================
         # ON-DEMAND VISUALIZATION
         # =========================================================
-        is_find_query = response.get("query", {}).get("operation") == "find"
+        operation = response.get("query", {}).get("operation")
+        is_visualizable_query = operation in ("find", "aggregate")
         
-        if is_find_query and isinstance(result_data, list) and len(result_data) > 0:
+        if is_visualizable_query and isinstance(result_data, list) and len(result_data) > 0:
             
             st.write("") 
             
