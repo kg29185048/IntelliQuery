@@ -126,6 +126,8 @@ from agents.schema_agent import get_schema
 # =========================================================
 # PIPELINE STATE
 # =========================================================
+MAX_RETRIES = 2
+
 class PipelineState(TypedDict):
     db: Any
     user_query: str
@@ -136,6 +138,8 @@ class PipelineState(TypedDict):
     explanation: Optional[str]
     result: Optional[Any]
     error: Optional[str]
+    retry_count: int
+    last_error: Optional[str]
 
 
 # =========================================================
@@ -154,13 +158,13 @@ def schema_node(state: PipelineState) -> PipelineState:
 # NODE 2: Query Generation Agent
 # =========================================================
 def query_node(state: PipelineState) -> PipelineState:
-    print("[LangGraph] Node: query_node")
+    print(f"[LangGraph] Node: query_node (attempt {state.get('retry_count', 0) + 1})")
     try:
-        query_dict = generate_query(state["user_query"], state["schema"])
+        query_dict = generate_query(state["user_query"], state["schema"], feedback=state.get("last_error"))
         print("⚙️ Generated JSON:", query_dict)
         if not isinstance(query_dict, dict):
             return {**state, "error": "Invalid JSON format from LLM. Expected a dictionary."}
-        return {**state, "query_dict": query_dict}
+        return {**state, "query_dict": query_dict, "error": None}
     except Exception as e:
         return {**state, "error": f"Query generation failed: {str(e)}"}
 
@@ -241,12 +245,37 @@ def execution_node(state: PipelineState) -> PipelineState:
 
 
 # =========================================================
-# CONDITIONAL EDGE: route after validation
+# NODE: Retry
 # =========================================================
-def should_continue(state: PipelineState) -> str:
+def retry_node(state: PipelineState) -> PipelineState:
+    count = state.get("retry_count", 0) + 1
+    print(f"[LangGraph] Node: retry_node (retry {count}/{MAX_RETRIES})")
+    return {
+        **state,
+        "retry_count": count,
+        "last_error": state.get("error") or state.get("validation_msg"),
+        "error": None,
+        "query_dict": None,
+        "is_valid": None,
+        "validation_msg": None,
+    }
+
+
+# =========================================================
+# CONDITIONAL EDGES
+# =========================================================
+def after_query(state: PipelineState) -> str:
     if state.get("error"):
+        if state.get("retry_count", 0) < MAX_RETRIES:
+            return "retry"
         return "end"
+    return "validate"
+
+
+def after_validation(state: PipelineState) -> str:
     if not state.get("is_valid"):
+        if state.get("retry_count", 0) < MAX_RETRIES:
+            return "retry"
         return "end"
     return "explain"
 
@@ -260,16 +289,23 @@ def build_graph():
     graph.add_node("schema", schema_node)
     graph.add_node("query", query_node)
     graph.add_node("validate", validation_node)
+    graph.add_node("retry", retry_node)
     graph.add_node("explain", explanation_node)
     graph.add_node("execute", execution_node)
 
     graph.set_entry_point("schema")
     graph.add_edge("schema", "query")
-    graph.add_edge("query", "validate")
-    graph.add_conditional_edges("validate", should_continue, {
-        "explain": "explain",
+    graph.add_conditional_edges("query", after_query, {
+        "validate": "validate",
+        "retry": "retry",
         "end": END,
     })
+    graph.add_conditional_edges("validate", after_validation, {
+        "explain": "explain",
+        "retry": "retry",
+        "end": END,
+    })
+    graph.add_edge("retry", "query")  # loop back
     graph.add_edge("explain", "execute")
     graph.add_edge("execute", END)
 
@@ -295,6 +331,8 @@ def run_pipeline(db, user_query: str) -> dict:
         "explanation": None,
         "result": None,
         "error": None,
+        "retry_count": 0,
+        "last_error": None,
     }
 
     final_state = _compiled_graph.invoke(initial_state)

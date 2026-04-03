@@ -35,7 +35,9 @@ llm = ChatGroq(
     model_name="llama-3.1-8b-instant"
 ).bind(response_format={"type": "json_object"}) # <-- THIS IS THE MAGIC BULLET
 
-def generate_query(user_query, schema):
+def generate_query(user_query, schema, feedback=None):
+    if feedback:
+        user_query = f"{user_query}\n\n[Previous attempt failed: {feedback}. Fix the query and try again.]"
     prompt = QUERY_PROMPT.format(schema=schema, user_query=user_query)
     
     # Get the response
