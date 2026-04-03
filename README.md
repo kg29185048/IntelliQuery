@@ -20,21 +20,18 @@ This project solves that by enabling:
 
 ---
 
-## 🏗️ Architecture
-User Input (Streamlit UI)
-↓
-router_agent.py ← orchestrates everything
-↓
-┌───────────────────────────────────────┐
-│ 1. schema_agent → reads schema │
-│ 2. query_agent → NL → query │
-│ 3. validation_agent → security │
-│ 4. explanation_agent → explanation │
-│ 5. execution (inline) → runs query │
-│ 6. visualization_agent → charts │
-└───────────────────────────────────────┘
-↓
-Streamlit UI (tables + charts)
+
+### 🔁 Flow Summary
+
+1. User enters query in Streamlit UI  
+2. `router_agent` orchestrates the pipeline  
+3. `schema_agent` extracts database structure  
+4. `query_agent` converts NL → MongoDB query  
+5. `validation_agent` ensures safety  
+6. Query is executed on MongoDB  
+7. `explanation_agent` explains results  
+8. `visualization_agent` generates charts (optional)  
+9. Results displayed in UI  
 
 
 ---
@@ -102,7 +99,9 @@ Show me all users with gmail emails
     "email": { "$regex": "gmail" }
   }
 }
-Explanation:
+```
+
+**Explanation:**
 This query finds all users whose email contains 'gmail'
 
 ## 🧰 Tech Stack
