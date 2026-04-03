@@ -23,10 +23,21 @@
 
 #         st.subheader("Result")
 #         st.write(response["result"])
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import streamlit as st
 import json
+from bson import ObjectId
 from database.mongo_client import get_db
 from agents.router_agent import run_pipeline
+
+class MongoJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, ObjectId):
+            return str(obj)
+        return super().default(obj)
 
 st.set_page_config(page_title="Mongo Query AI", page_icon="🧠")
 st.title("🧠 NL → MongoDB Query System")
@@ -46,7 +57,7 @@ if st.button("Run"):
             # Displaying the Query
             st.subheader("Generated Query")
             # Convert dict to pretty JSON string for display
-            query_json = json.dumps(response["query"], indent=4)
+            query_json = json.dumps(response["query"], indent=4, cls=MongoJSONEncoder)
             st.code(query_json, language="json")
 
             # Displaying the Explanation

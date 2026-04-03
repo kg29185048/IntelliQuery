@@ -14,3 +14,4 @@ def extract_full_schema(db, sample_size=5):
         schema[collection_name] = list(fields)
 
     return schema
+

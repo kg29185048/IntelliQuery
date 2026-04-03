@@ -5,4 +5,4 @@ from app.config import MONGO_URI
 
 def get_db():
     client = MongoClient(MONGO_URI)
-    return client["test_db"]
+    return client["sample_mflix"]

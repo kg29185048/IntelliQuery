@@ -1,5 +1,9 @@
 # app/main.py
 
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from database.mongo_client import get_db
 from agents.router_agent import run_pipeline
 
