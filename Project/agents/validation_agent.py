@@ -1,4 +1,5 @@
-FORBIDDEN = ["$unset", "$out", "$merge"] # MongoDB specific forbidden operators
+# 'update' is removed. Destructive commands are kept to prevent data loss.
+FORBIDDEN_WORDS = ["delete", "drop", "remove", "$out", "$merge"]
 
 def validate_query(query):
     print("Validation Input:", query, type(query))
@@ -6,10 +7,10 @@ def validate_query(query):
     if not isinstance(query, dict):
         return False, "Invalid query format: Expected a dictionary"
 
-    # Convert dict to string just for a quick security scan
+    # Convert dict to string for a quick security scan
     query_str = str(query).lower()
-    for word in ["delete", "drop", "update", "remove"]:
+    for word in FORBIDDEN_WORDS:
         if word in query_str:
-            return False, f"Security Violation: {word} is not allowed"
+            return False, f"Security Violation: '{word}' is not allowed. Deletions are forbidden."
 
     return True, "Valid query"
