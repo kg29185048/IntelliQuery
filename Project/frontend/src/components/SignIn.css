@@ -1,0 +1,189 @@
+.signin-shell {
+  min-height: 100vh;
+  background: #080c14;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  /* subtle neon grid */
+  background-image:
+    linear-gradient(rgba(168, 85, 247, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.signin-card {
+  width: 100%;
+  max-width: 420px;
+  background: #0d1117;
+  border: 1px solid #1e2640;
+  border-radius: 16px;
+  padding: 2.25rem 2rem 2rem;
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.08), 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+.signin-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.signin-logo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, #a855f7, #22d3ee);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+.signin-tagline {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #475569;
+  letter-spacing: 0.03em;
+}
+
+.signin-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.signin-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.signin-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.signin-input {
+  background: #060a12;
+  border: 1.5px solid #1e2640;
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  font-family: inherit;
+  padding: 0.6rem 0.85rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.signin-input::placeholder { color: #374151; }
+
+.signin-input:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18);
+}
+
+.signin-input--error {
+  border-color: #f87171 !important;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.12) !important;
+}
+
+.signin-input--mono {
+  font-family: "Cascadia Code", "Fira Code", "Courier New", monospace;
+  font-size: 0.8rem;
+}
+
+.signin-error {
+  font-size: 0.75rem;
+  color: #f87171;
+  margin-top: 1px;
+}
+
+.signin-hint {
+  font-size: 0.71rem;
+  color: #374151;
+  margin-top: 2px;
+}
+
+/* DB type tab selector */
+.signin-db-tabs {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.signin-db-tab {
+  flex: 1;
+  min-width: 72px;
+  padding: 0.42rem 0.5rem;
+  border: 1.5px solid #1e2640;
+  border-radius: 8px;
+  background: #060a12;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+
+.signin-db-tab:hover {
+  border-color: #a855f7;
+  color: #c084fc;
+}
+
+.signin-db-tab--active {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.12);
+  color: #a855f7;
+}
+
+.signin-global-error {
+  background: #1a0a10;
+  border: 1px solid #7f1d1d;
+  border-radius: 8px;
+  color: #f87171;
+  font-size: 0.83rem;
+  padding: 0.6rem 0.85rem;
+}
+
+.signin-btn {
+  margin-top: 0.4rem;
+  background: linear-gradient(135deg, #7c3aed, #22d3ee);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.12s, box-shadow 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+}
+
+.signin-btn:hover:not(:disabled) {
+  opacity: 0.88;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(168, 85, 247, 0.45);
+}
+
+.signin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.signin-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.25);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spinnerRotate 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spinnerRotate {
+  to { transform: rotate(360deg); }
+}

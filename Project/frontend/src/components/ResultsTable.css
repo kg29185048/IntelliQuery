@@ -1,0 +1,46 @@
+.results-empty { color: #475569; font-style: italic; padding: 0.5rem 0; font-size: 0.875rem; }
+.results-string { background: #071018; padding: 0.65rem 1rem; border-radius: 8px; color: #cbd5e1; font-size: 0.9rem; border-left: 3px solid #22d3ee; }
+.results-json { background: #1e1e1e; color: #d4d4d4; padding: 0.75rem; border-radius: 8px; font-size: 0.8rem; overflow-x: auto; max-height: 200px; overflow-y: auto; }
+.results-plain-list { padding-left: 1.25rem; margin: 0; }
+.results-plain-list li { padding: 3px 0; font-size: 0.9rem; color: #94a3b8; }
+
+.results-table-wrapper { margin-top: 0.5rem; }
+
+.results-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.results-count { font-size: 0.78rem; color: #475569; }
+
+.btn-download-csv {
+  font-size: 0.78rem;
+  color: #a855f7;
+  background: #0f0a1e;
+  border: 1px solid #2e1065;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  font-weight: 500;
+}
+.btn-download-csv:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+
+.table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 1px solid #1e2640;
+  max-height: 490px;
+}
+.results-table { width: 100%; border-collapse: collapse; font-size: 0.845rem; }
+.results-table thead { background: #0d1117; position: sticky; top: 0; z-index: 1; }
+.results-table th { padding: 0.55rem 0.85rem; text-align: left; font-weight: 700; color: #22d3ee; border-bottom: 1.5px solid #1e2640; white-space: nowrap; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.results-table td { padding: 0.5rem 0.85rem; border-bottom: 1px solid #1a2035; color: #94a3b8; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.results-table tbody tr:hover { background: #111827; color: #e2e8f0; }
+.results-table tbody tr:last-child td { border-bottom: none; }
