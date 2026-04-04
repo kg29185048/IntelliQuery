@@ -82,6 +82,8 @@ if "response" not in st.session_state:
     st.session_state.response = None
 if "current_query" not in st.session_state:
     st.session_state.current_query = ""
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []  # list of {user, query, explanation, result}
 
 # ==========================================
 # SIDEBAR: DATABASE SCHEMA EXPLORER
@@ -102,20 +104,54 @@ with st.sidebar:
     except Exception as e:
         st.error(f"Could not load schema: {e}")
 
+    st.divider()
+    if st.button("🗑️ Clear Conversation"):
+        st.session_state.chat_history = []
+        st.session_state.response = None
+        st.session_state.current_query = ""
+        st.rerun()
+
+# --- Chat History Display ---
+for turn in st.session_state.chat_history:
+    with st.chat_message("user"):
+        st.write(turn["user"])
+    with st.chat_message("assistant"):
+        st.markdown(f"**Explanation:** {turn['explanation']}")
+        if isinstance(turn["result"], list):
+            if len(turn["result"]) > 0:
+                st.dataframe(pd.DataFrame(turn["result"]), use_container_width=True)
+            else:
+                st.write("No matching documents found.")
+        else:
+            st.write(turn["result"])
+
 # --- User Input ---
-query = st.text_input("Ask your question", placeholder="e.g. Show me all users, or Add Bob who is 30 years old")
+query = st.chat_input("Ask your question (e.g. Show me sci-fi movies, then: make it after 2010)")
 
 # 1. Fetch data and save it to memory
-if st.button("Run"):
-    if not query:
-        st.warning("Please enter a question first!")
-    else:
-        with st.spinner("Processing request..."):
-            # Save the result to session state so it survives button clicks
-            st.session_state.response = run_pipeline(db, query)
-            st.session_state.current_query = query
+if query:
+    with st.chat_message("user"):
+        st.write(query)
 
-# 2. Render UI based on memory, NOT the Run button
+    with st.spinner("Processing request..."):
+        # Build history list for the LLM (last 5 turns to avoid token overflow)
+        history_for_llm = [
+            {"user": t["user"], "query": json.dumps(t.get("query", {}), cls=MongoJSONEncoder)}
+            for t in st.session_state.chat_history[-5:]
+        ]
+        response = run_pipeline(db, query, history=history_for_llm)
+        st.session_state.response = response
+        st.session_state.current_query = query
+
+        # Append to chat history
+        st.session_state.chat_history.append({
+            "user": query,
+            "query": response.get("query", {}),
+            "explanation": response.get("explanation", ""),
+            "result": response.get("result", []),
+        })
+
+# 2. Render latest response
 if st.session_state.response:
     response = st.session_state.response
     saved_query = st.session_state.current_query

@@ -35,10 +35,15 @@ llm = ChatGroq(
     model_name="llama-3.1-8b-instant"
 ).bind(response_format={"type": "json_object"}) # <-- THIS IS THE MAGIC BULLET
 
-def generate_query(user_query, schema, feedback=None):
+def generate_query(user_query, schema, feedback=None, history=None):
     if feedback:
         user_query = f"{user_query}\n\n[Previous attempt failed: {feedback}. Fix the query and try again.]"
-    prompt = QUERY_PROMPT.format(schema=schema, user_query=user_query)
+    history_text = ""
+    if history:
+        history_text = "\n".join(
+            f"User: {turn['user']}\nGenerated Query: {turn['query']}" for turn in history
+        )
+    prompt = QUERY_PROMPT.format(schema=schema, user_query=user_query, history=history_text)
     
     # Get the response
     response = llm.invoke(prompt)

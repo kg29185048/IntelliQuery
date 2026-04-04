@@ -131,6 +131,7 @@ MAX_RETRIES = 2
 class PipelineState(TypedDict):
     db: Any
     user_query: str
+    history: Optional[list]
     schema: Optional[Any]
     query_dict: Optional[dict]
     is_valid: Optional[bool]
@@ -160,7 +161,12 @@ def schema_node(state: PipelineState) -> PipelineState:
 def query_node(state: PipelineState) -> PipelineState:
     print(f"[LangGraph] Node: query_node (attempt {state.get('retry_count', 0) + 1})")
     try:
-        query_dict = generate_query(state["user_query"], state["schema"], feedback=state.get("last_error"))
+        query_dict = generate_query(
+            state["user_query"],
+            state["schema"],
+            feedback=state.get("last_error"),
+            history=state.get("history") or []
+        )
         print("⚙️ Generated JSON:", query_dict)
         if not isinstance(query_dict, dict):
             return {**state, "error": "Invalid JSON format from LLM. Expected a dictionary."}
@@ -318,12 +324,13 @@ _compiled_graph = build_graph()
 # =========================================================
 # PUBLIC ENTRY POINT (keeps existing interface intact)
 # =========================================================
-def run_pipeline(db, user_query: str) -> dict:
+def run_pipeline(db, user_query: str, history: list = None) -> dict:
     print("\n🧠 User Query:", user_query)
 
     initial_state: PipelineState = {
         "db": db,
         "user_query": user_query,
+        "history": history,
         "schema": None,
         "query_dict": None,
         "is_valid": None,
