@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import ChatMessage from './components/ChatMessage'
 import ChatInput from './components/ChatInput'
 import SignIn from './components/SignIn'
+import McpModal from './components/McpModal'
 import './App.css'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [backendStatus, setBackendStatus] = useState('checking')
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [mcpModalOpen, setMcpModalOpen] = useState(false)
   const chatEndRef = useRef(null)
 
   const mongoUri    = user?.mongoUri    ?? ''
@@ -79,6 +81,17 @@ function App() {
       const text = await response.text()
       try { data = JSON.parse(text) } catch { throw new Error(text || `Server error ${response.status}`) }
       if (!response.ok) throw new Error(data.detail || `Server error ${response.status}`)
+
+      // Soft failure: server returned suggestions instead of results
+      if (data.error && data.suggestions) {
+        setMessages(prev => [...prev, {
+          role: 'error',
+          content: data.error,
+          suggestions: data.suggestions,
+        }])
+        return
+      }
+
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: data.explanation,
@@ -122,6 +135,9 @@ function App() {
               <span className="status-dot" style={{ background: statusColor[backendStatus] }} />
               {statusLabel[backendStatus]}
             </div>
+            <button className="mcp-nav-btn" onClick={() => setMcpModalOpen(true)} title="Connect to Claude Desktop">
+              🤖 Claude
+            </button>
             <button className="signout-btn" onClick={handleSignOut} title="Sign out">
               <span className="signout-name">{user.name}</span>
               <span className="signout-arrow">↩</span>
@@ -155,7 +171,7 @@ function App() {
           )}
 
           {messages.map((msg, idx) => (
-            <ChatMessage key={idx} message={msg} />
+            <ChatMessage key={idx} message={msg} onSuggest={handleSend} />
           ))}
 
           {loading && (
@@ -171,6 +187,14 @@ function App() {
         {/* Chat Input */}
         <ChatInput onSend={handleSend} loading={loading} />
       </div>
+
+      {/* MCP Connect Modal */}
+      {mcpModalOpen && (
+        <McpModal
+          defaultMongoUri={mongoUri}
+          onClose={() => setMcpModalOpen(false)}
+        />
+      )}
     </div>
   )
 }

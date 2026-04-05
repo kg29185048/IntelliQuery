@@ -121,6 +121,8 @@ from agents.query_agent import generate_query
 from agents.validation_agent import validate_query
 from agents.explanation_agent import explain_query
 from agents.schema_agent import get_schema
+from agents.suggestion_agent import generate_suggestions
+from agents.relevance_agent import check_relevance
 
 import datetime
 from bson import ObjectId, Decimal128
@@ -150,8 +152,6 @@ def sanitize_doc(doc: dict) -> dict:
 # =========================================================
 # PIPELINE STATE
 # =========================================================
-MAX_RETRIES = 2
-
 class PipelineState(TypedDict):
     db: Any
     user_query: str
@@ -163,8 +163,9 @@ class PipelineState(TypedDict):
     explanation: Optional[str]
     result: Optional[Any]
     error: Optional[str]
-    retry_count: int
-    last_error: Optional[str]
+    suggestions: Optional[list]
+    is_relevant: Optional[bool]
+    relevance_reason: Optional[str]
 
 
 # =========================================================
@@ -180,15 +181,24 @@ def schema_node(state: PipelineState) -> PipelineState:
 
 
 # =========================================================
+# NODE 1b: Relevance Check
+# =========================================================
+def relevance_node(state: PipelineState) -> PipelineState:
+    print("[LangGraph] Node: relevance_node")
+    is_relevant, reason = check_relevance(state["user_query"], state["schema"])
+    return {**state, "is_relevant": is_relevant, "relevance_reason": reason}
+
+
+# =========================================================
 # NODE 2: Query Generation Agent
 # =========================================================
 def query_node(state: PipelineState) -> PipelineState:
-    print(f"[LangGraph] Node: query_node (attempt {state.get('retry_count', 0) + 1})")
+    print("[LangGraph] Node: query_node")
     try:
         query_dict = generate_query(
             state["user_query"],
             state["schema"],
-            feedback=state.get("last_error"),
+            feedback=None,
             history=state.get("history") or []
         )
         print("⚙️ Generated JSON:", query_dict)
@@ -277,37 +287,51 @@ def execution_node(state: PipelineState) -> PipelineState:
 # =========================================================
 # NODE: Retry
 # =========================================================
-def retry_node(state: PipelineState) -> PipelineState:
-    count = state.get("retry_count", 0) + 1
-    print(f"[LangGraph] Node: retry_node (retry {count}/{MAX_RETRIES})")
-    return {
-        **state,
-        "retry_count": count,
-        "last_error": state.get("error") or state.get("validation_msg"),
-        "error": None,
-        "query_dict": None,
-        "is_valid": None,
-        "validation_msg": None,
-    }
+# (Removed — failures go directly to suggestion_node)
 
 
 # =========================================================
-# CONDITIONAL EDGES
+# NODE: Suggestion Agent
 # =========================================================
+def after_schema(state: PipelineState) -> str:
+    """Skip to suggestions immediately if the query has nothing to do with the schema."""
+    if not state.get("is_relevant", True):
+        return "suggest"
+    return "query"
+
+
 def after_query(state: PipelineState) -> str:
     if state.get("error"):
-        if state.get("retry_count", 0) < MAX_RETRIES:
-            return "retry"
-        return "end"
+        return "suggest"
     return "validate"
 
 
 def after_validation(state: PipelineState) -> str:
     if not state.get("is_valid"):
-        if state.get("retry_count", 0) < MAX_RETRIES:
-            return "retry"
-        return "end"
+        msg = state.get("validation_msg") or ""
+        # Hard security violation (forbidden word) — no suggestion, just block
+        if "Security Violation" in msg:
+            return "end"
+        return "suggest"
     return "explain"
+
+
+# =========================================================
+# NODE: Suggestion Agent
+# =========================================================
+def suggestion_node(state: PipelineState) -> PipelineState:
+    print("[LangGraph] Node: suggestion_node")
+    # Prefer the relevance reason as the most descriptive error message
+    if state.get("is_relevant") is False:
+        error_msg = f"Your question doesn't seem to match this database. {state.get('relevance_reason', '')}".strip()
+    else:
+        error_msg = state.get("error") or state.get("validation_msg") or "Unknown error"
+    suggestions = generate_suggestions(
+        state["user_query"],
+        state.get("schema") or {},
+        error_msg,
+    )
+    return {**state, "suggestions": suggestions, "error": error_msg}
 
 
 # =========================================================
@@ -317,27 +341,31 @@ def build_graph():
     graph = StateGraph(PipelineState)
 
     graph.add_node("schema", schema_node)
+    graph.add_node("relevance", relevance_node)
     graph.add_node("query", query_node)
     graph.add_node("validate", validation_node)
-    graph.add_node("retry", retry_node)
     graph.add_node("explain", explanation_node)
     graph.add_node("execute", execution_node)
+    graph.add_node("suggest", suggestion_node)
 
     graph.set_entry_point("schema")
-    graph.add_edge("schema", "query")
+    graph.add_edge("schema", "relevance")
+    graph.add_conditional_edges("relevance", after_schema, {
+        "query": "query",
+        "suggest": "suggest",
+    })
     graph.add_conditional_edges("query", after_query, {
         "validate": "validate",
-        "retry": "retry",
-        "end": END,
+        "suggest": "suggest",
     })
     graph.add_conditional_edges("validate", after_validation, {
         "explain": "explain",
-        "retry": "retry",
         "end": END,
+        "suggest": "suggest",
     })
-    graph.add_edge("retry", "query")  
     graph.add_edge("explain", "execute")
     graph.add_edge("execute", END)
+    graph.add_edge("suggest", END)
 
     return graph.compile()
 
@@ -362,12 +390,26 @@ def run_pipeline(db, user_query: str, history: list = None) -> dict:
         "explanation": None,
         "result": None,
         "error": None,
-        "retry_count": 0,
-        "last_error": None,
+        "suggestions": None,
+        "is_relevant": None,
+        "relevance_reason": None,
     }
 
     final_state = _compiled_graph.invoke(initial_state)
 
+    # Suggestion path — soft failure with alternatives for the user
+    if final_state.get("suggestions"):
+        # Use the relevance reason as the error message if that's what triggered suggestions
+        if final_state.get("is_relevant") is False:
+            error_msg = f"Your question doesn't seem to match this database. {final_state.get('relevance_reason', '')}".strip()
+        else:
+            error_msg = final_state.get("error") or final_state.get("validation_msg") or "Query could not be generated."
+        return {
+            "error": error_msg,
+            "suggestions": final_state["suggestions"],
+        }
+
+    # Hard error (e.g. forbidden word)
     if final_state.get("error"):
         return {"error": final_state["error"]}
     if final_state.get("validation_msg") and not final_state.get("is_valid"):

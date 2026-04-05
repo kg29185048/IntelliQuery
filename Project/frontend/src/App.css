@@ -89,6 +89,23 @@ body {
 .signout-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .signout-arrow { font-size: 0.85rem; }
 
+.mcp-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: transparent;
+  border: 1px solid #3b1d6e;
+  border-radius: 8px;
+  padding: 4px 10px;
+  color: #a78bfa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.mcp-nav-btn:hover { background: #1e0d40; border-color: #a855f7; color: #c4b5fd; }
+
 .chat-area {
   flex: 1;
   overflow-y: auto;
