@@ -6,3 +6,8 @@ python-dotenv
 pymongo
 streamlit
 mcp 
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+pymysql

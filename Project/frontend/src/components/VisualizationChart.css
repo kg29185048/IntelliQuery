@@ -1,0 +1,58 @@
+.viz-section {
+  margin-top: 1rem;
+}
+
+.btn-generate-viz {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-generate-viz:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(168, 85, 247, 0.5);
+}
+
+.btn-generate-viz:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chart-wrapper {
+  margin-top: 1rem;
+  background: #0d1117;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #1e2640;
+}
+
+.chart-title {
+  font-weight: 600;
+  color: #22d3ee;
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+.viz-not-applicable {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #0d1a20;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.viz-error {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #1a0a10;
+  border-radius: 6px;
+  color: #f87171;
+  font-size: 0.875rem;
+}
