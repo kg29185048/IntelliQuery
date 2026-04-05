@@ -118,7 +118,7 @@ from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, END
 
 from agents.query_agent import generate_query
-from agents.validation_agent import validate_query
+from agents.validation_agent import validate_query, check_destructive_intent
 from agents.explanation_agent import explain_query
 from agents.schema_agent import get_schema
 from agents.suggestion_agent import generate_suggestions
@@ -194,6 +194,13 @@ def relevance_node(state: PipelineState) -> PipelineState:
 # =========================================================
 def query_node(state: PipelineState) -> PipelineState:
     print("[LangGraph] Node: query_node")
+
+    # ─── Destructive intent check on raw user query ───
+    is_safe, safety_msg = check_destructive_intent(state["user_query"])
+    if not is_safe:
+        print(f"[ValidationAgent] ⚠️ Destructive query blocked: {state['user_query']!r}")
+        return {**state, "error": safety_msg, "is_valid": False, "validation_msg": safety_msg}
+
     try:
         query_dict = generate_query(
             state["user_query"],
@@ -302,17 +309,17 @@ def after_schema(state: PipelineState) -> str:
 
 def after_query(state: PipelineState) -> str:
     if state.get("error"):
+        # Destructive intent was caught before LLM — go straight to end, not suggestions
+        if state.get("is_valid") is False:
+            return "end"
         return "suggest"
     return "validate"
 
 
 def after_validation(state: PipelineState) -> str:
     if not state.get("is_valid"):
-        msg = state.get("validation_msg") or ""
-        # Hard security violation (forbidden word) — no suggestion, just block
-        if "Security Violation" in msg:
-            return "end"
-        return "suggest"
+        # Unsafe/destructive query — return error directly, no suggestions
+        return "end"
     return "explain"
 
 
@@ -357,6 +364,7 @@ def build_graph():
     graph.add_conditional_edges("query", after_query, {
         "validate": "validate",
         "suggest": "suggest",
+        "end": END,
     })
     graph.add_conditional_edges("validate", after_validation, {
         "explain": "explain",

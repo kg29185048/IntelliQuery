@@ -1,4 +1,5 @@
 import json
+import re
 from langchain_groq import ChatGroq
 from app.config import GROQ_API_KEY
 
@@ -6,6 +7,13 @@ llm = ChatGroq(
     groq_api_key=GROQ_API_KEY,
     model_name="llama-3.1-8b-instant"
 ).bind(response_format={"type": "json_object"})
+
+# Destructive keywords — relevance check is bypassed for these;
+# the validation agent is solely responsible for blocking them.
+_DESTRUCTIVE_RE = re.compile(
+    r"\b(delete|drop|remove|truncate|wipe|purge|erase|destroy|merge)\b",
+    re.IGNORECASE
+)
 
 def check_relevance(user_query: str, schema) -> tuple[bool, str]:
     """
@@ -18,6 +26,11 @@ def check_relevance(user_query: str, schema) -> tuple[bool, str]:
     """
     schema_str = json.dumps(schema) if not isinstance(schema, str) else schema
 
+    # Bypass LLM entirely for destructive queries — validation agent handles blocking.
+    if _DESTRUCTIVE_RE.search(user_query):
+        print("[RelevanceAgent] Destructive keyword detected — skipping LLM, marking relevant=True")
+        return True, "Destructive operation detected; deferred to validation agent."
+
     prompt = f"""You are a strict database query gatekeeper.
 
 A user has asked a question. Your job is to decide whether the user's question
@@ -26,16 +39,12 @@ is asking about data that genuinely exists in the provided database schema.
 User Question: {user_query}
 Database Schema: {schema_str}
 
-Rules — read carefully:
-1. Match on DOMAIN, not on creative field reuse.
-   - "show me medical data" against a movies DB → FALSE. The user wants medical records; the DB has movies.
-   - "show me action movies" against a movies DB → TRUE.
-2. Do NOT invent indirect mappings. If the user asks for X and X is not a collection,
-   a field, or the primary purpose of any collection, answer false.
-3. The user's INTENT must match the database's purpose.
-   - A movies DB cannot answer questions about medical patients, financial transactions,
-     employee records, weather data, etc., even if a text field could theoretically contain such words.
-4. Only answer true if the question is directly and naturally answerable from the schema as-is.
+### Rules:
+1. **Domain Alignment**: The intent of the question must match the purpose of the schema. (e.g., medical questions are irrelevant to a financial database).
+2. **Direct Mapping**: Only return true if the requested data points (or entities) exist as collections, tables, or fields.
+3. **No Creative Stretching**: Do not assume the database can answer questions outside its primary domain just because a text field *could* contain that info.
+4. **Operations**: Do NOT block destructive operations (delete, drop, etc.). If the target entity exists in the schema, the request is relevant.
+5. **Ambiguity**: If a query is partially answerable, mark as true.
 
 Return ONLY valid JSON:
 {{"is_relevant": true_or_false, "reason": "one short sentence explaining the decision"}}

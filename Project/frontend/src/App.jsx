@@ -104,6 +104,12 @@ function App() {
         return
       }
 
+      // Hard error (e.g. safety block) — show as error bubble, not assistant card
+      if (data.error) {
+        setMessages(prev => [...prev, { role: 'error', content: data.error }])
+        return
+      }
+
       setMessages(prev => [...prev, {
         role: 'assistant',
         content: data.explanation,

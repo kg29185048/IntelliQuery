@@ -118,7 +118,13 @@ async def process_query(
                     "error": response["error"],
                     "suggestions": response["suggestions"],
                 }
-            raise HTTPException(status_code=400, detail=response["error"])
+            # Hard error (safety block, validation failure) — return 200 so frontend shows the message
+            return {
+                "query": None,
+                "explanation": "",
+                "result": [],
+                "error": response["error"],
+            }
 
         return {
             "query": response.get("query", {}),
