@@ -378,3 +378,6 @@ def run_pipeline(db, user_query: str, history: list = None) -> dict:
         "explanation": final_state["explanation"],
         "result": final_state["result"] if final_state["result"] is not None else [],
     }
+
+
+
