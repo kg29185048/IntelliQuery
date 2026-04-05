@@ -122,6 +122,30 @@ from agents.validation_agent import validate_query
 from agents.explanation_agent import explain_query
 from agents.schema_agent import get_schema
 
+import datetime
+from bson import ObjectId, Decimal128
+
+
+def _sanitize(value):
+    """Recursively convert BSON / non-JSON-serializable types to plain Python."""
+    if isinstance(value, ObjectId):
+        return str(value)
+    if isinstance(value, Decimal128):
+        return float(value.to_decimal())
+    if isinstance(value, datetime.datetime):
+        return value.isoformat()
+    if isinstance(value, datetime.date):
+        return value.isoformat()
+    if isinstance(value, dict):
+        return {k: _sanitize(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize(v) for v in value]
+    return value
+
+
+def sanitize_doc(doc: dict) -> dict:
+    return _sanitize(doc)
+
 
 # =========================================================
 # PIPELINE STATE
@@ -224,7 +248,7 @@ def execution_node(state: PipelineState) -> PipelineState:
             projection_query = query_dict.get("projection", None)
             cursor = collection.find(filter_query) if not projection_query else collection.find(filter_query, projection_query)
             results = list(cursor)
-            cleaned = [{**doc, "_id": str(doc["_id"])} for doc in results]
+            cleaned = [sanitize_doc(doc) for doc in results]
             return {**state, "result": cleaned}
 
         elif operation == "aggregate":
@@ -232,7 +256,7 @@ def execution_node(state: PipelineState) -> PipelineState:
             if not pipeline:
                 return {**state, "error": "No pipeline provided for aggregation"}
             results = list(collection.aggregate(pipeline))
-            cleaned = [{**doc, "_id": str(doc["_id"])} if "_id" in doc else doc for doc in results]
+            cleaned = [sanitize_doc(doc) for doc in results]
             return {**state, "result": cleaned}
 
         elif operation == "update":
@@ -311,7 +335,7 @@ def build_graph():
         "retry": "retry",
         "end": END,
     })
-    graph.add_edge("retry", "query")  # loop back
+    graph.add_edge("retry", "query")  
     graph.add_edge("explain", "execute")
     graph.add_edge("execute", END)
 

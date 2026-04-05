@@ -5,3 +5,8 @@ huggingface_hub
 python-dotenv
 pymongo
 streamlit
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+pymysql
