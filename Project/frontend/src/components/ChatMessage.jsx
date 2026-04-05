@@ -31,15 +31,16 @@ const ChatMessage = ({ message, onSuggest }) => {
               <div className="msg-suggestions-label">Did you mean one of these?</div>
               <div className="msg-suggestion-chips">
                 {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    className={`msg-suggestion-chip${s.startsWith('None') ? ' msg-suggestion-chip--none' : ''}`}
-                    onClick={() => !s.startsWith('None') && onSuggest && onSuggest(s)}
-                    disabled={s.startsWith('None')}
-                    title={s.startsWith('None') ? 'Rephrase your query in the input below' : s}
-                  >
-                    {s}
-                  </button>
+                  s.startsWith('None')
+                    ? <span key={i} className="msg-suggestion-none">{s}</span>
+                    : <button
+                        key={i}
+                        className="msg-suggestion-chip"
+                        onClick={() => onSuggest && onSuggest(s)}
+                        title={s}
+                      >
+                        {s}
+                      </button>
                 ))}
               </div>
             </div>

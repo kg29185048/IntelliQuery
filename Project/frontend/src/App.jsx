@@ -10,7 +10,13 @@ function App() {
   const [user, setUser] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('iq_user')) } catch { return null }
   })
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState(() => {
+    try {
+      const u = JSON.parse(sessionStorage.getItem('iq_user'))
+      if (!u?.email) return []
+      return JSON.parse(localStorage.getItem(`iq_history_${u.email}`)) || []
+    } catch { return [] }
+  })
   const [loading, setLoading] = useState(false)
   const [backendStatus, setBackendStatus] = useState('checking')
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -55,6 +61,12 @@ function App() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  // Persist chat history to localStorage scoped to the signed-in user
+  useEffect(() => {
+    if (!user?.email) return
+    try { localStorage.setItem(`iq_history_${user.email}`, JSON.stringify(messages)) } catch {}
+  }, [messages, user?.email])
 
   const handleSignIn = (userData) => {
     sessionStorage.setItem('iq_user', JSON.stringify(userData))
@@ -105,7 +117,10 @@ function App() {
     }
   }
 
-  const handleClear = () => setMessages([])
+  const handleClear = () => {
+    setMessages([])
+    if (user?.email) localStorage.removeItem(`iq_history_${user.email}`)
+  }
 
   if (!user) return <SignIn onSignIn={handleSignIn} />
 
@@ -114,6 +129,17 @@ function App() {
 
   return (
     <div className="app-shell">
+      {/* Floating left-edge toggle — visible when sidebar is closed */}
+      {!sidebarOpen && (
+        <button className="left-edge-toggle" onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect y="1" width="14" height="1.7" rx="0.85" fill="currentColor"/>
+            <rect y="6.15" width="14" height="1.7" rx="0.85" fill="currentColor"/>
+            <rect y="11.3" width="14" height="1.7" rx="0.85" fill="currentColor"/>
+          </svg>
+        </button>
+      )}
+
       {/* Sidebar */}
       <Sidebar open={sidebarOpen} onClear={handleClear} mongoUri={mongoUri} mongoDbName={mongoDbName} sqlUri={sqlUri} dbType={dbType} />
 
@@ -121,9 +147,13 @@ function App() {
       <div className={`main-area ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         {/* Top navbar */}
         <div className="top-navbar">
-          <button className="sidebar-toggle" onClick={() => setSidebarOpen(o => !o)}>
-            ☰
-          </button>
+          {sidebarOpen && (
+            <button className="sidebar-toggle" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 8h12M8 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
           <div className="navbar-brand">
             <div>
               <div className="navbar-title">IntelliQuery</div>
@@ -136,7 +166,7 @@ function App() {
               {statusLabel[backendStatus]}
             </div>
             <button className="mcp-nav-btn" onClick={() => setMcpModalOpen(true)} title="Connect to Claude Desktop">
-              🤖 Claude
+              Claude{localStorage.getItem('iq_mcp_groq_key') ? <span className="mcp-nav-dot" /> : null}
             </button>
             <button className="signout-btn" onClick={handleSignOut} title="Sign out">
               <span className="signout-name">{user.name}</span>

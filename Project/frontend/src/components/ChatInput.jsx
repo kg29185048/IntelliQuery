@@ -39,7 +39,10 @@ const ChatInput = ({ onSend, loading }) => {
           disabled={loading || !value.trim()}
           title="Send (Enter)"
         >
-          {loading ? '⏳' : '➤'}
+          {loading
+            ? <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeDasharray="28" strokeDashoffset="10" style={{animation:'spin .7s linear infinite',transformOrigin:'center'}} /></svg>
+            : <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8h12M10 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          }
         </button>
       </div>
       <div className="chat-input-hint">Press Enter to send · Shift+Enter for new line</div>

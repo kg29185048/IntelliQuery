@@ -1,8 +1,13 @@
 import { useState } from 'react'
 import './McpModal.css'
 
+const MCP_KEY_STORAGE = 'iq_mcp_groq_key'
+
 const McpModal = ({ defaultMongoUri, onClose }) => {
-  const [groqKey, setGroqKey] = useState('')
+  const savedKey = localStorage.getItem(MCP_KEY_STORAGE) || ''
+  const alreadyConnected = !!savedKey
+
+  const [groqKey, setGroqKey] = useState(savedKey)
   const [mongoUri, setMongoUri] = useState(defaultMongoUri || '')
   const [status, setStatus] = useState('idle') // idle | loading | success | error
   const [error, setError] = useState('')
@@ -22,6 +27,7 @@ const McpModal = ({ defaultMongoUri, onClose }) => {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.detail || 'Failed to configure MCP')
+      localStorage.setItem(MCP_KEY_STORAGE, groqKey)
       setStatus('success')
     } catch (err) {
       setError(err.message)
@@ -39,6 +45,11 @@ const McpModal = ({ defaultMongoUri, onClose }) => {
 
         {status !== 'success' ? (
           <>
+            {alreadyConnected && (
+              <div className="mcp-already-connected">
+                ✅ Previously connected — your saved key is pre-filled. Reconnect to update.
+              </div>
+            )}
             <p className="mcp-modal-desc">
               Adds IntelliQuery as an MCP tool in Claude Desktop. Fully restart Claude after connecting.
             </p>
