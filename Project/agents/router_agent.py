@@ -335,7 +335,7 @@ def build_graph():
         "retry": "retry",
         "end": END,
     })
-    graph.add_edge("retry", "query")  # loop back
+    graph.add_edge("retry", "query")  
     graph.add_edge("explain", "execute")
     graph.add_edge("execute", END)
 
