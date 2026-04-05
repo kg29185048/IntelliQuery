@@ -4,8 +4,8 @@ import ResultsTable from './ResultsTable'
 import VisualizationChart from './VisualizationChart'
 import './ChatMessage.css'
 
-const ChatMessage = ({ message }) => {
-  const { role, content, data, userQuery } = message
+const ChatMessage = ({ message, onSuggest }) => {
+  const { role, content, data, userQuery, suggestions } = message
 
   if (role === 'user') {
     return (
@@ -22,8 +22,29 @@ const ChatMessage = ({ message }) => {
     return (
       <div className="msg-row msg-row--assistant">
         <div className="msg-avatar msg-avatar--bot">🧠</div>
-        <div className="msg-bubble msg-bubble--error">
-          <strong>Error:</strong> {content}
+        <div className="msg-error-block">
+          <div className="msg-bubble msg-bubble--error">
+            <strong>Error:</strong> {content}
+          </div>
+          {suggestions && suggestions.length > 0 && (
+            <div className="msg-suggestions">
+              <div className="msg-suggestions-label">Did you mean one of these?</div>
+              <div className="msg-suggestion-chips">
+                {suggestions.map((s, i) => (
+                  s.startsWith('None')
+                    ? <span key={i} className="msg-suggestion-none">{s}</span>
+                    : <button
+                        key={i}
+                        className="msg-suggestion-chip"
+                        onClick={() => onSuggest && onSuggest(s)}
+                        title={s}
+                      >
+                        {s}
+                      </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     )

@@ -5,6 +5,7 @@ huggingface_hub
 python-dotenv
 pymongo
 streamlit
+mcp 
 fastapi
 uvicorn[standard]
 sqlalchemy

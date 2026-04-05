@@ -1,25 +1,24 @@
 .signin-shell {
   min-height: 100vh;
-  background: #080c14;
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  /* subtle neon grid */
   background-image:
-    linear-gradient(rgba(168, 85, 247, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(var(--border-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-soft) 1px, transparent 1px);
+  background-size: 44px 44px;
 }
 
 .signin-card {
   width: 100%;
   max-width: 420px;
-  background: #0d1117;
-  border: 1px solid #1e2640;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 16px;
   padding: 2.25rem 2rem 2rem;
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.08), 0 24px 64px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
 }
 
 .signin-header {
@@ -30,17 +29,17 @@
 .signin-logo {
   font-size: 1.6rem;
   font-weight: 800;
-  background: linear-gradient(90deg, #a855f7, #22d3ee);
+  background: linear-gradient(100deg, #818cf8, #a5b4fc, var(--cyan));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
 }
 
 .signin-tagline {
-  margin-top: 4px;
-  font-size: 0.78rem;
-  color: #475569;
+  margin-top: 5px;
+  font-size: 0.77rem;
+  color: var(--text-3);
   letter-spacing: 0.03em;
 }
 
@@ -57,18 +56,18 @@
 }
 
 .signin-label {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: #94a3b8;
-  letter-spacing: 0.04em;
+  color: var(--text-2);
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
 .signin-input {
-  background: #060a12;
-  border: 1.5px solid #1e2640;
+  background: var(--surface-2);
+  border: 1.5px solid var(--border);
   border-radius: 8px;
-  color: #e2e8f0;
+  color: var(--text-1);
   font-size: 0.9rem;
   font-family: inherit;
   padding: 0.6rem 0.85rem;
@@ -77,16 +76,16 @@
   width: 100%;
 }
 
-.signin-input::placeholder { color: #374151; }
+.signin-input::placeholder { color: var(--text-3); }
 
 .signin-input:focus {
-  border-color: #a855f7;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 .signin-input--error {
-  border-color: #f87171 !important;
-  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.12) !important;
+  border-color: var(--red) !important;
+  box-shadow: 0 0 0 3px rgba(248,113,113,0.12) !important;
 }
 
 .signin-input--mono {
@@ -95,33 +94,33 @@
 }
 
 .signin-error {
-  font-size: 0.75rem;
-  color: #f87171;
+  font-size: 0.73rem;
+  color: var(--red);
   margin-top: 1px;
 }
 
 .signin-hint {
-  font-size: 0.71rem;
-  color: #374151;
+  font-size: 0.7rem;
+  color: var(--text-3);
   margin-top: 2px;
 }
 
 /* DB type tab selector */
 .signin-db-tabs {
   display: flex;
-  gap: 0.4rem;
+  gap: 0.35rem;
   flex-wrap: wrap;
 }
 
 .signin-db-tab {
   flex: 1;
-  min-width: 72px;
-  padding: 0.42rem 0.5rem;
-  border: 1.5px solid #1e2640;
+  min-width: 68px;
+  padding: 0.4rem 0.5rem;
+  border: 1.5px solid var(--border);
   border-radius: 8px;
-  background: #060a12;
-  color: #64748b;
-  font-size: 0.78rem;
+  background: var(--surface-2);
+  color: var(--text-3);
+  font-size: 0.77rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -129,50 +128,51 @@
 }
 
 .signin-db-tab:hover {
-  border-color: #a855f7;
-  color: #c084fc;
+  border-color: var(--accent);
+  color: #a5b4fc;
 }
 
 .signin-db-tab--active {
-  border-color: #a855f7;
-  background: rgba(168, 85, 247, 0.12);
-  color: #a855f7;
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  color: #c7d2fe;
 }
 
 .signin-global-error {
-  background: #1a0a10;
-  border: 1px solid #7f1d1d;
+  background: rgba(248,113,113,0.06);
+  border: 1px solid rgba(248,113,113,0.25);
   border-radius: 8px;
-  color: #f87171;
+  color: var(--red);
   font-size: 0.83rem;
   padding: 0.6rem 0.85rem;
 }
 
 .signin-btn {
   margin-top: 0.4rem;
-  background: linear-gradient(135deg, #7c3aed, #22d3ee);
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 10px;
   padding: 0.7rem 1rem;
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: opacity 0.18s, transform 0.12s, box-shadow 0.18s;
+  transition: opacity 0.18s, transform 0.12s, background 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 42px;
+  letter-spacing: -0.01em;
 }
 
 .signin-btn:hover:not(:disabled) {
   opacity: 0.88;
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(168, 85, 247, 0.45);
+  background: var(--accent-dim);
 }
 
-.signin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.signin-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
 .signin-spinner {
   width: 18px;
