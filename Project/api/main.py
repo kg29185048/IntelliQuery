@@ -50,6 +50,7 @@ class HistoryItem(BaseModel):
 class QueryRequest(BaseModel):
     query: str
     history: Optional[List[HistoryItem]] = []
+    confirmed: bool = False
 
 class QueryResponse(BaseModel):
     query: Any
@@ -57,6 +58,7 @@ class QueryResponse(BaseModel):
     result: Any
     suggestions: Optional[List[str]] = None
     error: Optional[str] = None
+    requires_confirmation: Optional[bool] = None
 
 class VisualizeRequest(BaseModel):
     user_query: str
@@ -106,7 +108,15 @@ async def process_query(
             response = run_sql_pipeline(engine, request.query, schema, history=history)
         else:
             db = get_db_from_uri(x_mongo_uri, x_mongo_db) if x_mongo_uri else get_db()
-            response = run_pipeline(db, request.query, history=history)
+            response = run_pipeline(db, request.query, history=history, confirmed=request.confirmed)
+
+        if response.get("requires_confirmation"):
+            return {
+                "query": response.get("query"),
+                "explanation": response.get("explanation", ""),
+                "result": [],
+                "requires_confirmation": True,
+            }
 
         if "error" in response:
             # Soft failure with suggestions — return 200 so the frontend can show chips

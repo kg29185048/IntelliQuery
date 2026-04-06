@@ -119,16 +119,17 @@ body {
 
 /* IntelliQuery — Inter 800, animated shimmer */
 .navbar-title {
-  font-size: 1.5rem;
-  font-weight: 800;
+  font-size: 1.9rem;
+  font-weight: 100;
   letter-spacing: -0.04em;
   background: linear-gradient(100deg, #ffffff, #ffffff, var(--cyan), #ffffff);
   background-size: 220% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  /animation: shimmerBrand 5s linear infinite;
+  //animation: shimmerBrand 5s linear infinite;
   white-space: nowrap;
+  font-family: serif;  
 }
 @keyframes shimmerBrand {
   0%   { background-position: 0% center; }

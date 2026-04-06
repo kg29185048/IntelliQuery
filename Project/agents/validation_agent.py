@@ -19,7 +19,7 @@ def check_destructive_intent(user_query: str):
         word = match.group(1)
         return False, (
             f"\u26a0\ufe0f Unsafe query detected: '{word}' operations are not permitted. "
-            "IntelliQuery is a read-only interface — it supports SELECT / find / aggregate queries only. "
+            "IntelliQuery is a read-only interface — it supports SELECT / find / aggregate /update queries only. "
             "Destructive operations (delete, drop, remove, merge, etc.) are blocked to protect your data."
         )
     return True, "Safe"
@@ -37,8 +37,8 @@ def validate_query(query):
         if word in query_str:
             return False, (
                 f"\u26a0\ufe0f Unsafe query blocked: '{word}' operations are not permitted. "
-                "IntelliQuery only allows read queries (find / aggregate). "
-                "Destructive operations are disabled to protect your data."
+                "IntelliQuery supports find, aggregate, insert, and update operations. "
+                "Destructive operations (delete, drop, remove, merge, etc.) are disabled to protect your data."
             )
 
     return True, "Valid query"

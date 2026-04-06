@@ -94,6 +94,17 @@ function App() {
       try { data = JSON.parse(text) } catch { throw new Error(text || `Server error ${response.status}`) }
       if (!response.ok) throw new Error(data.detail || `Server error ${response.status}`)
 
+      // Update operation — show confirmation bubble before executing
+      if (data.requires_confirmation) {
+        setMessages(prev => [...prev, {
+          role: 'confirm',
+          content: data.explanation,
+          data: { query: data.query },
+          userQuery: query,
+        }])
+        return
+      }
+
       // Soft failure: server returned suggestions instead of results
       if (data.error && data.suggestions) {
         setMessages(prev => [...prev, {
@@ -121,6 +132,53 @@ function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleConfirmUpdate = async (originalQuery) => {
+    // Mark the confirm bubble as resolved so buttons are disabled
+    setMessages(prev => prev.map(m =>
+      m.role === 'confirm' && m.userQuery === originalQuery
+        ? { ...m, resolved: true }
+        : m
+    ))
+    setLoading(true)
+    try {
+      const response = await fetch('/api/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...buildDbHeaders() },
+        body: JSON.stringify({ query: originalQuery, history: llmHistory, confirmed: true })
+      })
+      let data
+      const text = await response.text()
+      try { data = JSON.parse(text) } catch { throw new Error(text || `Server error ${response.status}`) }
+      if (!response.ok) throw new Error(data.detail || `Server error ${response.status}`)
+      if (data.error && data.suggestions) {
+        setMessages(prev => [...prev, { role: 'error', content: data.error, suggestions: data.suggestions }])
+        return
+      }
+      if (data.error) {
+        setMessages(prev => [...prev, { role: 'error', content: data.error }])
+        return
+      }
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.explanation,
+        data,
+        userQuery: originalQuery
+      }])
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'error', content: err.message }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancelUpdate = (originalQuery) => {
+    setMessages(prev => prev.map(m =>
+      m.role === 'confirm' && m.userQuery === originalQuery
+        ? { ...m, resolved: true, cancelled: true }
+        : m
+    ))
   }
 
   const handleClear = () => {
@@ -207,7 +265,7 @@ function App() {
           )}
 
           {messages.map((msg, idx) => (
-            <ChatMessage key={idx} message={msg} onSuggest={handleSend} />
+            <ChatMessage key={idx} message={msg} onSuggest={handleSend} onConfirm={handleConfirmUpdate} onCancel={handleCancelUpdate} />
           ))}
 
           {loading && (
