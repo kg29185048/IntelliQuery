@@ -10,7 +10,5 @@ llm = ChatGroq(
 
 def explain_query(query):
     prompt = EXPLAIN_PROMPT.format(query=query)
-
     response = llm.invoke(prompt)
-
-    return response.content   # 🔥 IMPORTANT
+    return response.content   
