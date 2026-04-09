@@ -12,38 +12,104 @@
 .msg-row--user + .msg-row--user { margin-top: -0.5rem; }
 
 .msg-avatar {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.9rem;
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 3px;
 }
-.msg-avatar--user { background: linear-gradient(135deg, #7c3aed, #a855f7); color: white; font-size: 0.75rem; font-weight: 700; }
-.msg-avatar--bot  { background: linear-gradient(135deg, #0891b2, #22d3ee); color: white; font-size: 0.85rem; }
+.msg-avatar--user { background: linear-gradient(135deg, var(--accent-dim), var(--accent)); color: white; font-size: 0.72rem; font-weight: 700; }
+.msg-avatar--bot  { background: linear-gradient(135deg, #0891b2, var(--cyan)); color: white; font-size: 0.82rem; }
 
 .msg-bubble {
-  padding: 0.65rem 1rem;
-  border-radius: 18px;
+  padding: 0.6rem 0.95rem;
+  border-radius: 16px;
   max-width: 72%;
-  font-size: 0.95rem;
-  line-height: 1.55;
+  font-size: 0.92rem;
+  line-height: 1.6;
 }
 .msg-bubble--user {
-  background: #0f0a1e;
-  color: #e2e8f0;
+  background: var(--surface-2);
+  color: var(--text-1);
   border-bottom-right-radius: 4px;
-  border: 1px solid #2e1065;
+  border: 1px solid var(--border);
 }
 .msg-bubble--error {
-  background: #1a0a10;
-  color: #f87171;
-  border: 1px solid #7f1d1d;
-  border-radius: 12px;
-  font-size: 0.9rem;
+  background: rgba(248,113,113,0.06);
+  color: var(--red);
+  border: 1px solid rgba(248,113,113,0.25);
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+}
+
+.msg-error-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 72%;
+}
+
+.msg-suggestions {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.8rem 0.95rem;
+}
+
+.msg-suggestions-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-3);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.msg-suggestion-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.msg-suggestion-chip {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.32rem 0.8rem;
+  color: #a5b4fc;
+  font-size: 0.78rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  text-align: left;
+}
+.msg-suggestion-chip:hover:not(:disabled) {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: #e0e7ff;
+}
+.msg-suggestion-chip--none {
+  background: transparent;
+  border-color: var(--border-soft);
+  color: var(--text-3);
+  cursor: default;
+  font-style: italic;
+}
+.msg-suggestion-chip--none:disabled { opacity: 1; }
+
+.msg-suggestion-none {
+  display: inline-block;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.73rem;
+  font-style: italic;
+  color: var(--text-3);
+  border-top: 1px dashed var(--border);
+  margin-top: 0.2rem;
+  width: 100%;
 }
 
 .msg-content {
@@ -57,26 +123,26 @@
   grid-template-columns: 1fr 1fr;
   gap: 0.875rem;
   margin-bottom: 1rem;
-  background: #0d1117;
-  border: 1px solid #1e2640;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 @media (max-width: 660px) { .result-columns { grid-template-columns: 1fr; } }
 
 .result-col-title {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #a855f7;
+  letter-spacing: 0.07em;
+  color: var(--accent);
   margin-bottom: 0.4rem;
+  opacity: 0.85;
 }
 
 .query-code {
-  background: #1e1e1e;
-  color: #d4d4d4;
+  background: #161620;
+  color: #c9d1d9;
   border-radius: 8px;
   padding: 0.85rem 1rem;
   font-family: "Cascadia Code", "Fira Code", "Courier New", monospace;
@@ -87,17 +153,18 @@
   margin: 0;
   max-height: 220px;
   overflow-y: auto;
-  line-height: 1.5;
+  line-height: 1.55;
+  border: 1px solid var(--border-soft);
 }
 
 .explanation-box {
-  background: #071018;
-  border-left: 3px solid #22d3ee;
+  background: rgba(34,211,238,0.04);
+  border-left: 2px solid var(--cyan);
   padding: 0.75rem 1rem;
   border-radius: 0 8px 8px 0;
-  color: #cbd5e1;
-  font-size: 0.9rem;
-  line-height: 1.6;
+  color: var(--text-1);
+  font-size: 0.88rem;
+  line-height: 1.65;
   overflow-y: auto;
   max-height: 320px;
 }
@@ -111,26 +178,90 @@
   margin: 0.25rem 0 0.5rem;
 }
 .explanation-box li { margin-bottom: 0.2rem; }
-.explanation-box strong { color: #e2e8f0; }
+.explanation-box strong { color: var(--text-1); }
 .explanation-box code {
-  background: #0d1a2e;
+  background: var(--surface-2);
   color: #93c5fd;
   padding: 0.1em 0.35em;
   border-radius: 4px;
   font-family: "Cascadia Code", "Fira Code", monospace;
   font-size: 0.82em;
 }
+}
 .explanation-box h1,
 .explanation-box h2,
 .explanation-box h3 {
-  font-size: 0.95rem;
+  font-size: 0.93rem;
   font-weight: 700;
   margin: 0.5rem 0 0.25rem;
-  color: #e2e8f0;
+  color: var(--text-1);
 }
 
 .result-divider {
   border: none;
-  border-top: 1px solid #1e2640;
+  border-top: 1px solid var(--border-soft);
   margin: 0.875rem 0;
 }
+/* -- Update confirmation bubble -- */
+.msg-confirm-block {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.25rem 0 0.75rem;
+}
+
+.msg-confirm-warning {
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  color: #fbbf24;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.msg-confirm-actions {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.msg-confirm-btn {
+  padding: 0.45rem 1.1rem;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+}
+
+.msg-confirm-btn--confirm {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #4ade80;
+}
+.msg-confirm-btn--confirm:hover {
+  background: rgba(34, 197, 94, 0.22);
+  border-color: rgba(34, 197, 94, 0.7);
+}
+
+.msg-confirm-btn--cancel {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #f87171;
+}
+.msg-confirm-btn--cancel:hover {
+  background: rgba(248, 113, 113, 0.18);
+  border-color: rgba(248, 113, 113, 0.6);
+}
+
+.msg-confirm-resolved {
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 0.45rem 0;
+}
+.msg-confirm-resolved--done     { color: #4ade80; }
+.msg-confirm-resolved--cancelled { color: #f87171; }
