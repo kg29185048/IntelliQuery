@@ -2,10 +2,21 @@
 
 import certifi
 from pymongo import MongoClient
+from functools import lru_cache
 from app.config import MONGO_URI
 
+@lru_cache(maxsize=100)
+def _get_mongo_client(uri: str) -> MongoClient:
+    """Cached MongoClient factory to ensure connection pooling."""
+    return MongoClient(
+        uri,
+        tlsCAFile=certifi.where(),
+        serverSelectionTimeoutMS=10000,
+        connectTimeoutMS=10000,
+    )
+
 def get_db():
-    client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
+    client = _get_mongo_client(MONGO_URI)
     return client["sample_mflix"]
 
 def get_db_from_uri(uri: str, db_name: str = None):
@@ -18,10 +29,5 @@ def get_db_from_uri(uri: str, db_name: str = None):
         raise ValueError(
             "No database name provided. Enter the database name in the 'Database Name' field."
         )
-    client = MongoClient(
-        uri,
-        tlsCAFile=certifi.where(),
-        serverSelectionTimeoutMS=10000,
-        connectTimeoutMS=10000,
-    )
+    client = _get_mongo_client(uri)
     return client[resolved]

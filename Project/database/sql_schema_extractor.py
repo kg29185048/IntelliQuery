@@ -1,8 +1,10 @@
 # database/sql_schema_extractor.py
 
 from sqlalchemy import inspect
+from api.utils.cache_utils import ttl_cache
 
 
+@ttl_cache(ttl_seconds=300)
 def extract_sql_schema(engine) -> dict:
     """
     Return a dict of {table_name: [column_name, ...]} for all tables

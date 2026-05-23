@@ -197,6 +197,17 @@ def execution_node(state: PipelineState) -> PipelineState:
         elif operation == "find":
             filter_query     = query_dict.get("filter", {})
             projection_query = query_dict.get("projection") or None
+            
+            # Sanitize projection: MongoDB cannot mix inclusion (1) and exclusion (0) except for _id
+            if isinstance(projection_query, dict):
+                has_inclusion = any(bool(v) for k, v in projection_query.items() if k != "_id")
+                if has_inclusion:
+                    # If we have inclusions, strip out any exclusions except for _id
+                    projection_query = {
+                        k: v for k, v in projection_query.items()
+                        if bool(v) or (k == "_id" and not bool(v))
+                    }
+            
             sort_spec        = query_dict.get("sort") or None
             limit            = query_dict.get("limit") or 0
 

@@ -2,11 +2,18 @@
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import Engine
+from functools import lru_cache
 
 
+@lru_cache(maxsize=100)
 def get_sql_engine(uri: str) -> Engine:
-    """Create a SQLAlchemy engine from a connection URI."""
-    return create_engine(uri)
+    """Create and cache a SQLAlchemy engine from a connection URI."""
+    return create_engine(
+        uri,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10
+    )
 
 
 def execute_sql(engine: Engine, sql: str) -> list[dict]:
