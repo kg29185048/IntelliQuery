@@ -2,10 +2,37 @@ import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import ResultsTable from './ResultsTable'
 import VisualizationChart from './VisualizationChart'
+import IntentCard from './IntentCard'
 import './ChatMessage.css'
 
-const ChatMessage = ({ message, onSuggest, onConfirm, onCancel }) => {
+const ChatMessage = ({ message, onSuggest, onConfirm, onCancel, onIntentConfirm, onIntentReset }) => {
   const { role, content, data, userQuery, suggestions } = message
+
+  // ── Intent confirmation card (Phase 1 output) ──────────────────────────
+  if (role === 'intent') {
+    const { resolved, extracted_intent, collections } = message
+    if (resolved) {
+      return (
+        <div className="msg-row msg-row--assistant">
+          <div className="msg-avatar msg-avatar--bot">🧠</div>
+          <div className="msg-bubble msg-bubble--intent-resolved">
+            ✅ Intent confirmed — generating query…
+          </div>
+        </div>
+      )
+    }
+    return (
+      <div className="msg-row msg-row--assistant">
+        <div className="msg-avatar msg-avatar--bot">🧠</div>
+        <IntentCard
+          intent={extracted_intent}
+          collections={collections || []}
+          onConfirm={(editedIntent) => onIntentConfirm && onIntentConfirm(userQuery, editedIntent)}
+          onStartOver={() => onIntentReset && onIntentReset()}
+        />
+      </div>
+    )
+  }
 
   if (role === 'user') {
     return (
