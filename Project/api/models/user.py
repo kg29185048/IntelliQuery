@@ -18,3 +18,30 @@ class UserInDB(BaseModel):
     name: str
     email: EmailStr
     password_hash: str
+
+
+class SendSignupOtp(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+
+class SignupVerify(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    otp: str
+
+
+class ForgotPassword(BaseModel):
+    email: EmailStr
+
+
+class ResetPassword(BaseModel):
+    email: EmailStr
+    otp: str
+    new_password: str
+
+
+class GoogleLoginRequest(BaseModel):
+    token: str
