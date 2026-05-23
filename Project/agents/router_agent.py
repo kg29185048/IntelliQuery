@@ -1,18 +1,37 @@
+"""
+Router Agent — LangGraph orchestration for the two-phase query pipeline.
+
+Phase 1 (intent extraction):
+  schema → relevance → intent_node  →  [PAUSE: frontend shows IntentCard]
+
+Phase 2 (query generation, triggered when confirmed_intent is present):
+  schema → relevance → query_node (uses confirmed_intent) → validate → explain → execute → END
+                           ↓ (on error)
+                       suggest → END
+"""
+
+import logging
 from typing import Any, Optional
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, END
 
-from agents.query_agent import generate_query
-from agents.validation_agent import validate_query, check_destructive_intent
-from agents.explanation_agent import explain_query
-from agents.schema_agent import get_schema
-from agents.suggestion_agent import generate_suggestions
-from agents.relevance_agent import check_relevance
+from agents.query_agent          import generate_query
+from agents.validation_agent     import validate_query, check_destructive_intent
+from agents.explanation_agent    import explain_query
+from agents.schema_agent         import get_schema
+from agents.suggestion_agent     import generate_suggestions
+from agents.relevance_agent      import check_relevance
+from agents.intent_extraction_agent import extract_intent
 
 import datetime
 from bson import ObjectId, Decimal128
 
+logger = logging.getLogger(__name__)
 
+
+# ===========================================================================
+# BSON SANITISER
+# ===========================================================================
 def _sanitize(value):
     """Recursively convert BSON / non-JSON-serializable types to plain Python."""
     if isinstance(value, ObjectId):
@@ -29,35 +48,43 @@ def _sanitize(value):
         return [_sanitize(v) for v in value]
     return value
 
+
 def sanitize_doc(doc: dict) -> dict:
     return _sanitize(doc)
 
-# =========================================================
+
+# ===========================================================================
 # PIPELINE STATE
-# =========================================================
+# ===========================================================================
 class PipelineState(TypedDict):
-    db: Any
-    user_query: str
-    history: Optional[list]
-    schema: Optional[Any]
-    query_dict: Optional[dict]
-    is_valid: Optional[bool]
-    validation_msg: Optional[str]
-    explanation: Optional[str]
-    result: Optional[Any]
-    error: Optional[str]
-    suggestions: Optional[list]
-    is_relevant: Optional[bool]
-    relevance_reason: Optional[str]
-    confirmed: Optional[bool]
+    db:                  Any
+    user_query:          str
+    history:             Optional[list]
+    schema:              Optional[Any]
+    # Phase 1 outputs
+    extracted_intent:    Optional[dict]
+    # Phase 2 inputs
+    confirmed_intent:    Optional[dict]   # Set by caller when user confirms
+    intent_confirmed:    Optional[bool]   # True → skip intent_node, run query_node
+    # Pipeline outputs
+    query_dict:          Optional[dict]
+    is_valid:            Optional[bool]
+    validation_msg:      Optional[str]
+    explanation:         Optional[str]
+    result:              Optional[Any]
+    error:               Optional[str]
+    suggestions:         Optional[list]
+    is_relevant:         Optional[bool]
+    relevance_reason:    Optional[str]
+    confirmed:           Optional[bool]   # Legacy: update confirmation
     requires_confirmation: Optional[bool]
 
 
-# =========================================================
-# NODE 1: Schema Agent
-# =========================================================
+# ===========================================================================
+# NODE 1 — Schema
+# ===========================================================================
 def schema_node(state: PipelineState) -> PipelineState:
-    print("\n[LangGraph] Node: schema_node")
+    logger.debug("[LangGraph] schema_node")
     try:
         schema = get_schema(state["db"])
     except Exception:
@@ -65,71 +92,88 @@ def schema_node(state: PipelineState) -> PipelineState:
     return {**state, "schema": schema}
 
 
-# =========================================================
-# NODE 1b: Relevance Check
-# =========================================================
+# ===========================================================================
+# NODE 2 — Relevance
+# ===========================================================================
 def relevance_node(state: PipelineState) -> PipelineState:
-    print("[LangGraph] Node: relevance_node")
+    logger.debug("[LangGraph] relevance_node")
     is_relevant, reason = check_relevance(state["user_query"], state["schema"])
     return {**state, "is_relevant": is_relevant, "relevance_reason": reason}
 
 
-# =========================================================
-# NODE 2: Query Generation Agent
-# =========================================================
-def query_node(state: PipelineState) -> PipelineState:
-    print("[LangGraph] Node: query_node")
+# ===========================================================================
+# NODE 3a — Intent Extraction (Phase 1)
+# ===========================================================================
+def intent_node(state: PipelineState) -> PipelineState:
+    """
+    Phase 1: extract structured intent from the raw user query.
+    Sets extracted_intent and signals the API to pause and return to the frontend.
+    """
+    logger.debug("[LangGraph] intent_node")
+    extracted = extract_intent(
+        user_query=state["user_query"],
+        schema=state["schema"],
+        history=state.get("history") or [],
+    )
+    return {**state, "extracted_intent": extracted}
 
-    # ─── Destructive intent check on raw user query ───
+
+# ===========================================================================
+# NODE 3b — Query Generation (Phase 2)
+# ===========================================================================
+def query_node(state: PipelineState) -> PipelineState:
+    """
+    Phase 2: generate MongoDB query from confirmed intent.
+    Runs ONLY when confirmed_intent is provided by the caller.
+    """
+    logger.debug("[LangGraph] query_node")
+
+    confirmed_intent = state.get("confirmed_intent") or {}
+
+    # Safety check on the raw user query before generating anything
     is_safe, safety_msg = check_destructive_intent(state["user_query"])
     if not is_safe:
-        print(f"[ValidationAgent] ⚠️ Destructive query blocked: {state['user_query']!r}")
+        logger.warning("[QueryNode] Destructive query blocked: %r", state["user_query"])
         return {**state, "error": safety_msg, "is_valid": False, "validation_msg": safety_msg}
 
-    try:
-        query_dict = generate_query(
-            state["user_query"],
-            state["schema"],
-            feedback=None,
-            history=state.get("history") or []
-        )
-        if not isinstance(query_dict, dict):
-            return {**state, "error": "Invalid JSON format from LLM. Expected a dictionary."}
-        print("⚙️ Generated JSON:", query_dict)
-        return {**state, "query_dict": query_dict, "error": None}
-    except Exception as e:
-        return {**state, "error": f"Query generation failed: {str(e)}"}
+    result = generate_query(confirmed_intent, state["schema"])
+
+    if "error" in result:
+        return {**state, "error": result["error"]}
+
+    logger.info("[QueryNode] Generated: %s", result)
+    return {**state, "query_dict": result, "error": None}
 
 
-# =========================================================
-# NODE 3: Validation Agent
-# =========================================================
+# ===========================================================================
+# NODE 4 — Validation
+# ===========================================================================
 def validation_node(state: PipelineState) -> PipelineState:
-    print("[LangGraph] Node: validation_node")
+    logger.debug("[LangGraph] validation_node")
     is_valid, msg = validate_query(state["query_dict"])
     return {**state, "is_valid": is_valid, "validation_msg": msg}
 
 
-# =========================================================
-# NODE 4: Explanation Agent
-# =========================================================
+# ===========================================================================
+# NODE 5 — Explanation
+# ===========================================================================
 def explanation_node(state: PipelineState) -> PipelineState:
-    print("[LangGraph] Node: explanation_node")
+    logger.debug("[LangGraph] explanation_node")
     try:
         explanation = explain_query(str(state["query_dict"]))
         return {**state, "explanation": explanation}
-    except Exception as e:
-        return {**state, "explanation": f"Could not generate explanation: {str(e)}"}
+    except Exception as exc:
+        return {**state, "explanation": f"Could not generate explanation: {exc}"}
 
 
-# =========================================================
-# NODE 5: Execution Agent
-# =========================================================
+# ===========================================================================
+# NODE 6 — Execution
+# ===========================================================================
 def execution_node(state: PipelineState) -> PipelineState:
-    print("[LangGraph] Node: execution_node")
+    logger.debug("[LangGraph] execution_node")
     query_dict = state["query_dict"]
-    db = state["db"]
-    operation = query_dict.get("operation")
+    db         = state["db"]
+    operation  = query_dict.get("operation")
 
     collection_name = query_dict.get("collection")
     if not collection_name:
@@ -146,9 +190,24 @@ def execution_node(state: PipelineState) -> PipelineState:
             return {**state, "result": f"✅ Document added with ID: {str(result.inserted_id)}"}
 
         elif operation == "find":
-            filter_query = query_dict.get("filter", {})
-            projection_query = query_dict.get("projection", None)
-            cursor = collection.find(filter_query) if not projection_query else collection.find(filter_query, projection_query)
+            filter_query     = query_dict.get("filter", {})
+            projection_query = query_dict.get("projection") or None
+            sort_spec        = query_dict.get("sort") or None
+            limit            = query_dict.get("limit") or 0
+
+            cursor = collection.find(filter_query, projection_query) if projection_query else collection.find(filter_query)
+            if sort_spec:
+                # sort_spec: {"field": "x", "direction": "asc"/"desc"} or raw pymongo format
+                if isinstance(sort_spec, dict) and "field" in sort_spec:
+                    direction = -1 if sort_spec.get("direction") == "desc" else 1
+                    cursor = cursor.sort(sort_spec["field"], direction)
+                elif isinstance(sort_spec, list):
+                    cursor = cursor.sort(sort_spec)
+            if limit:
+                cursor = cursor.limit(int(limit))
+            else:
+                cursor = cursor.limit(200)   # Hard safety cap
+
             results = list(cursor)
             cleaned = [sanitize_doc(doc) for doc in results]
             return {**state, "result": cleaned}
@@ -165,7 +224,7 @@ def execution_node(state: PipelineState) -> PipelineState:
             if not state.get("confirmed"):
                 return {**state, "requires_confirmation": True}
             filter_query = query_dict.get("filter", {})
-            update_data = query_dict.get("update_data", {})
+            update_data  = query_dict.get("update_data", {})
             if not update_data:
                 return {**state, "error": "No update data provided (e.g., missing $set)"}
             result = collection.update_many(filter_query, update_data)
@@ -174,52 +233,20 @@ def execution_node(state: PipelineState) -> PipelineState:
         else:
             return {**state, "error": f"Unsupported operation: {operation}"}
 
-    except Exception as e:
-        return {**state, "error": f"Execution failed: {str(e)}"}
+    except Exception as exc:
+        return {**state, "error": f"Execution failed: {exc}"}
 
 
-# =========================================================
-# NODE: Retry
-# =========================================================
-# (Removed — failures go directly to suggestion_node)
-
-
-# =========================================================
-# NODE: Suggestion Agent
-# =========================================================
-def after_schema(state: PipelineState) -> str:
-    """Skip to suggestions immediately if the query has nothing to do with the schema."""
-    if not state.get("is_relevant", True):
-        return "suggest"
-    return "query"
-
-
-def after_query(state: PipelineState) -> str:
-    if state.get("error"):
-        # Destructive intent was caught before LLM — go straight to end, not suggestions
-        if state.get("is_valid") is False:
-            return "end"
-        return "suggest"
-    return "validate"
-
-
-def after_validation(state: PipelineState) -> str:
-    if not state.get("is_valid"):
-        # Unsafe/destructive query — return error directly, no suggestions
-        return "end"
-    return "explain"
-
-
-# =========================================================
-# NODE: Suggestion Agent
-# =========================================================
+# ===========================================================================
+# NODE 7 — Suggestion
+# ===========================================================================
 def suggestion_node(state: PipelineState) -> PipelineState:
-    print("[LangGraph] Node: suggestion_node")
-    # Prefer the relevance reason as the most descriptive error message
+    logger.debug("[LangGraph] suggestion_node")
     if state.get("is_relevant") is False:
         error_msg = f"Your question doesn't seem to match this database. {state.get('relevance_reason', '')}".strip()
     else:
         error_msg = state.get("error") or state.get("validation_msg") or "Unknown error"
+
     suggestions = generate_suggestions(
         state["user_query"],
         state.get("schema") or {},
@@ -228,39 +255,71 @@ def suggestion_node(state: PipelineState) -> PipelineState:
     return {**state, "suggestions": suggestions, "error": error_msg}
 
 
-# =========================================================
+# ===========================================================================
+# CONDITIONAL EDGE FUNCTIONS
+# ===========================================================================
+def after_relevance(state: PipelineState) -> str:
+    """
+    If irrelevant → suggest.
+    If intent not yet confirmed (Phase 1) → intent.
+    If intent confirmed (Phase 2) → query.
+    """
+    if not state.get("is_relevant", True):
+        return "suggest"
+    if state.get("intent_confirmed"):
+        return "query"
+    return "intent"
+
+
+def after_query(state: PipelineState) -> str:
+    if state.get("error"):
+        if state.get("is_valid") is False:
+            return "end"      # Destructive — no suggestions
+        return "suggest"
+    return "validate"
+
+
+def after_validation(state: PipelineState) -> str:
+    if not state.get("is_valid"):
+        return "end"          # Unsafe query — return error, no suggestions
+    return "explain"
+
+
+# ===========================================================================
 # BUILD LANGGRAPH WORKFLOW
-# =========================================================
+# ===========================================================================
 def build_graph():
     graph = StateGraph(PipelineState)
 
-    graph.add_node("schema", schema_node)
+    graph.add_node("schema",    schema_node)
     graph.add_node("relevance", relevance_node)
-    graph.add_node("query", query_node)
-    graph.add_node("validate", validation_node)
-    graph.add_node("explain", explanation_node)
-    graph.add_node("execute", execution_node)
-    graph.add_node("suggest", suggestion_node)
+    graph.add_node("intent",    intent_node)
+    graph.add_node("query",     query_node)
+    graph.add_node("validate",  validation_node)
+    graph.add_node("explain",   explanation_node)
+    graph.add_node("execute",   execution_node)
+    graph.add_node("suggest",   suggestion_node)
 
     graph.set_entry_point("schema")
     graph.add_edge("schema", "relevance")
-    graph.add_conditional_edges("relevance", after_schema, {
-        "query": "query",
+    graph.add_conditional_edges("relevance", after_relevance, {
+        "intent":  "intent",
+        "query":   "query",
         "suggest": "suggest",
     })
+    graph.add_edge("intent", END)   # Phase 1 always stops here; Phase 2 re-enters at query
     graph.add_conditional_edges("query", after_query, {
         "validate": "validate",
-        "suggest": "suggest",
-        "end": END,
+        "suggest":  "suggest",
+        "end":      END,
     })
     graph.add_conditional_edges("validate", after_validation, {
         "explain": "explain",
-        "end": END,
-        "suggest": "suggest",
+        "end":     END,
     })
-    graph.add_edge("explain", "execute")
-    graph.add_edge("execute", END)
-    graph.add_edge("suggest", END)
+    graph.add_edge("explain",  "execute")
+    graph.add_edge("execute",  END)
+    graph.add_edge("suggest",  END)
 
     return graph.compile()
 
@@ -268,63 +327,114 @@ def build_graph():
 _compiled_graph = build_graph()
 
 
-# =========================================================
-# PUBLIC ENTRY POINT (keeps existing interface intact)
-# =========================================================
-def run_pipeline(db, user_query: str, history: list = None, confirmed: bool = False) -> dict:
-    print("\nUser Query:", user_query)
-
+# ===========================================================================
+# PUBLIC API
+# ===========================================================================
+def extract_intent_pipeline(db, user_query: str, history: list = None) -> dict:
+    """
+    Phase 1: run schema → relevance → intent_node.
+    Returns {"extracted_intent": {...}} or {"error": "...", "suggestions": [...]}
+    """
     initial_state: PipelineState = {
-        "db": db,
-        "user_query": user_query,
-        "history": history,
-        "schema": None,
-        "query_dict": None,
-        "is_valid": None,
-        "validation_msg": None,
-        "explanation": None,
-        "result": None,
-        "error": None,
-        "suggestions": None,
-        "is_relevant": None,
-        "relevance_reason": None,
-        "confirmed": confirmed,
+        "db":                  db,
+        "user_query":          user_query,
+        "history":             history,
+        "schema":              None,
+        "extracted_intent":    None,
+        "confirmed_intent":    None,
+        "intent_confirmed":    False,   # ← Phase 1
+        "query_dict":          None,
+        "is_valid":            None,
+        "validation_msg":      None,
+        "explanation":         None,
+        "result":              None,
+        "error":               None,
+        "suggestions":         None,
+        "is_relevant":         None,
+        "relevance_reason":    None,
+        "confirmed":           False,
         "requires_confirmation": None,
     }
 
-    final_state = _compiled_graph.invoke(initial_state)
+    final = _compiled_graph.invoke(initial_state)
 
-    # Suggestion path — soft failure with alternatives for the user
-    if final_state.get("suggestions"):
-        # Use the relevance reason as the error message if that's what triggered suggestions
-        if final_state.get("is_relevant") is False:
-            error_msg = f"Your question doesn't seem to match this database. {final_state.get('relevance_reason', '')}".strip()
+    if final.get("suggestions"):
+        if final.get("is_relevant") is False:
+            error_msg = f"Your question doesn't seem to match this database. {final.get('relevance_reason', '')}".strip()
         else:
-            error_msg = final_state.get("error") or final_state.get("validation_msg") or "Query could not be generated."
-        return {
-            "error": error_msg,
-            "suggestions": final_state["suggestions"],
-        }
+            error_msg = final.get("error") or "Query could not be processed."
+        return {"error": error_msg, "suggestions": final["suggestions"]}
 
-    # Update operation awaiting user confirmation
-    if final_state.get("requires_confirmation"):
-        return {
-            "requires_confirmation": True,
-            "query": final_state["query_dict"],
-            "explanation": final_state["explanation"],
-        }
+    if final.get("error"):
+        return {"error": final["error"]}
 
-    # Hard error (e.g. forbidden word)
-    if final_state.get("error"):
-        return {"error": final_state["error"]}
-    if final_state.get("validation_msg") and not final_state.get("is_valid"):
-        return {"error": f"Validation Failed: {final_state['validation_msg']}"}
+    return {"extracted_intent": final.get("extracted_intent", {})}
 
-    return {
-        "query": final_state["query_dict"],
-        "explanation": final_state["explanation"],
-        "result": final_state["result"] if final_state["result"] is not None else [],
+
+def run_pipeline(
+    db,
+    user_query:       str,
+    history:          list = None,
+    confirmed:        bool = False,
+    confirmed_intent: dict = None,
+) -> dict:
+    """
+    Phase 2: run the full pipeline using a confirmed intent.
+
+    Args:
+        db:               MongoDB database object.
+        user_query:       Original NL query (used for destructive checks & suggestions).
+        history:          Conversation history.
+        confirmed:        True if user confirmed an update operation (legacy flag).
+        confirmed_intent: The structured intent dict from the IntentCard.
+
+    Returns:
+        dict with keys: query, explanation, result — or error/suggestions/requires_confirmation.
+    """
+    initial_state: PipelineState = {
+        "db":                  db,
+        "user_query":          user_query,
+        "history":             history,
+        "schema":              None,
+        "extracted_intent":    None,
+        "confirmed_intent":    confirmed_intent,
+        "intent_confirmed":    True,    # ← Phase 2
+        "query_dict":          None,
+        "is_valid":            None,
+        "validation_msg":      None,
+        "explanation":         None,
+        "result":              None,
+        "error":               None,
+        "suggestions":         None,
+        "is_relevant":         None,
+        "relevance_reason":    None,
+        "confirmed":           confirmed,
+        "requires_confirmation": None,
     }
 
+    final = _compiled_graph.invoke(initial_state)
 
+    if final.get("suggestions"):
+        if final.get("is_relevant") is False:
+            error_msg = f"Your question doesn't seem to match this database. {final.get('relevance_reason', '')}".strip()
+        else:
+            error_msg = final.get("error") or final.get("validation_msg") or "Query could not be generated."
+        return {"error": error_msg, "suggestions": final["suggestions"]}
 
+    if final.get("requires_confirmation"):
+        return {
+            "requires_confirmation": True,
+            "query":       final["query_dict"],
+            "explanation": final["explanation"],
+        }
+
+    if final.get("error"):
+        return {"error": final["error"]}
+    if final.get("validation_msg") and not final.get("is_valid"):
+        return {"error": f"Validation Failed: {final['validation_msg']}"}
+
+    return {
+        "query":       final["query_dict"],
+        "explanation": final["explanation"],
+        "result":      final["result"] if final["result"] is not None else [],
+    }
