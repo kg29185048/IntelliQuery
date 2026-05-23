@@ -27,7 +27,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 from database.mongo_client import get_db, get_db_from_uri
 from database.sql_client import get_sql_engine
 from database.sql_schema_extractor import extract_sql_schema
-from agents.router_agent import run_pipeline
+from agents.router_agent import run_pipeline, extract_intent_pipeline
 from agents.sql_agent import run_sql_pipeline
 from agents.schema_agent import get_schema
 from agents.visualization_agent import generate_visualization_config
@@ -63,6 +63,7 @@ class QueryRequest(BaseModel):
     query: str
     history: Optional[List[HistoryItem]] = []
     confirmed: bool = False
+    confirmed_intent: Optional[Any] = None   # Structured intent confirmed via IntentCard
 
 class QueryResponse(BaseModel):
     query: Any
@@ -155,6 +156,14 @@ async def process_query(
         else:
             db = get_db_from_uri(db_uri, db_name) if db_uri else app_db
             response = run_pipeline(db, request.query, history=history, confirmed=request.confirmed, permission_level=permission_level)
+            db = get_db_from_uri(x_mongo_uri, x_mongo_db) if x_mongo_uri else get_db()
+            response = run_pipeline(
+                db,
+                request.query,
+                history=history,
+                confirmed=request.confirmed,
+                confirmed_intent=request.confirmed_intent,
+            )
 
         if response.get("requires_confirmation"):
             return {
@@ -198,6 +207,41 @@ async def get_visualization(request: VisualizeRequest):
     try:
         config = generate_visualization_config(request.user_query, request.result_data)
         return config
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ExtractIntentRequest(BaseModel):
+    query: str
+    history: Optional[List[HistoryItem]] = []
+
+
+@app.post("/extract-intent")
+async def extract_intent_endpoint(
+    request: ExtractIntentRequest,
+    x_mongo_uri: Optional[str] = Header(default=None),
+    x_mongo_db:  Optional[str] = Header(default=None),
+    x_db_type:   Optional[str] = Header(default="mongodb"),
+):
+    """
+    Phase 1 — extract structured intent from a natural-language query.
+    Returns an extracted_intent dict for the frontend IntentCard,
+    or an error + suggestions if the query is irrelevant to the schema.
+    """
+    try:
+        if not request.query.strip():
+            raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+        if x_db_type == "sql":
+            # SQL path does not support intent extraction yet
+            raise HTTPException(status_code=400, detail="Intent extraction is only supported for MongoDB.")
+
+        db = get_db_from_uri(x_mongo_uri, x_mongo_db) if x_mongo_uri else get_db()
+        history = [{"user": h.user, "query": h.query} for h in (request.history or [])]
+        response = extract_intent_pipeline(db, request.query, history=history)
+        return response
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

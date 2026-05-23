@@ -29,6 +29,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mcpModalOpen, setMcpModalOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [schema, setSchema] = useState({})   // cached schema for IntentCard collections
   const chatEndRef = useRef(null)
 
   const dbType = currentWorkspace?.db_type ?? 'mongodb'
@@ -58,6 +59,19 @@ function App() {
     }
     checkBackend()
   }, [token])
+
+    // Fetch schema for collection list in IntentCard
+    const fetchSchema = async () => {
+      try {
+        const res = await fetch('/api/schema', { headers: buildDbHeaders() })
+        if (res.ok) {
+          const data = await res.json()
+          setSchema(data.schema || {})
+        }
+      } catch {}
+    }
+    fetchSchema()
+  }, [user])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -96,11 +110,12 @@ function App() {
     setBackendStatus('checking')
   }
 
+  // ── Phase 1: extract intent ─────────────────────────────────────────────
   const handleSend = async (query) => {
     setMessages(prev => [...prev, { role: 'user', content: query }])
     setLoading(true)
     try {
-      const response = await fetch('/api/query', {
+      const response = await fetch('/api/extract-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...buildHeaders() },
         body: JSON.stringify({ query, history: llmHistory })
@@ -110,44 +125,92 @@ function App() {
       try { data = JSON.parse(text) } catch { throw new Error(text || `Server error ${response.status}`) }
       if (!response.ok) throw new Error(data.detail || `Server error ${response.status}`)
 
-      // Update operation — show confirmation bubble before executing
-      if (data.requires_confirmation) {
-        setMessages(prev => [...prev, {
-          role: 'confirm',
-          content: data.explanation,
-          data: { query: data.query },
-          userQuery: query,
-        }])
-        return
-      }
-
-      // Soft failure: server returned suggestions instead of results
       if (data.error && data.suggestions) {
-        setMessages(prev => [...prev, {
-          role: 'error',
-          content: data.error,
-          suggestions: data.suggestions,
-        }])
+        setMessages(prev => [...prev, { role: 'error', content: data.error, suggestions: data.suggestions }])
         return
       }
-
-      // Hard error (e.g. safety block) — show as error bubble, not assistant card
       if (data.error) {
         setMessages(prev => [...prev, { role: 'error', content: data.error }])
         return
       }
 
+      // Show IntentCard for user to review/edit
       setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.explanation,
-        data,
-        userQuery: query
+        role: 'intent',
+        extracted_intent: data.extracted_intent,
+        collections: Object.keys(schema),
+        userQuery: query,
       }])
     } catch (err) {
       setMessages(prev => [...prev, { role: 'error', content: err.message }])
     } finally {
       setLoading(false)
     }
+  }
+
+  // ── Phase 2: run query with confirmed intent ────────────────────────────
+  const handleIntentConfirm = async (originalQuery, confirmedIntent) => {
+    // Mark the intent card as resolved
+    setMessages(prev => prev.map(m =>
+      m.role === 'intent' && m.userQuery === originalQuery && !m.resolved
+        ? { ...m, resolved: true }
+        : m
+    ))
+    setLoading(true)
+    try {
+      const response = await fetch('/api/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...buildDbHeaders() },
+        body: JSON.stringify({
+          query: originalQuery,
+          history: llmHistory,
+          confirmed_intent: confirmedIntent,
+        })
+      })
+      let data
+      const text = await response.text()
+      try { data = JSON.parse(text) } catch { throw new Error(text || `Server error ${response.status}`) }
+      if (!response.ok) throw new Error(data.detail || `Server error ${response.status}`)
+
+      if (data.requires_confirmation) {
+        setMessages(prev => [...prev, {
+          role: 'confirm',
+          content: data.explanation,
+          data: { query: data.query },
+          userQuery: originalQuery,
+        }])
+        return
+      }
+      if (data.error && data.suggestions) {
+        setMessages(prev => [...prev, { role: 'error', content: data.error, suggestions: data.suggestions }])
+        return
+      }
+      if (data.error) {
+        setMessages(prev => [...prev, { role: 'error', content: data.error }])
+        return
+      }
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.explanation,
+        data,
+        userQuery: originalQuery
+      }])
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'error', content: err.message }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ── Start Over: remove the pending IntentCard ───────────────────────────
+  const handleIntentReset = () => {
+    setMessages(prev => {
+      // Remove the last unresolved intent card and its preceding user bubble
+      const lastIntentIdx = [...prev].reverse().findIndex(m => m.role === 'intent' && !m.resolved)
+      if (lastIntentIdx === -1) return prev
+      const realIdx = prev.length - 1 - lastIntentIdx
+      return prev.filter((_, i) => i !== realIdx && i !== realIdx - 1)
+    })
   }
 
   const handleConfirmUpdate = async (originalQuery) => {
@@ -289,7 +352,15 @@ function App() {
           )}
 
           {messages.map((msg, idx) => (
-            <ChatMessage key={idx} message={msg} onSuggest={handleSend} onConfirm={handleConfirmUpdate} onCancel={handleCancelUpdate} />
+            <ChatMessage
+              key={idx}
+              message={msg}
+              onSuggest={handleSend}
+              onConfirm={handleConfirmUpdate}
+              onCancel={handleCancelUpdate}
+              onIntentConfirm={handleIntentConfirm}
+              onIntentReset={handleIntentReset}
+            />
           ))}
 
           {loading && (

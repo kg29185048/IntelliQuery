@@ -1,124 +1,103 @@
+"""
+Query Agent — Phase 2 of the two-phase query flow.
+
+Receives a CONFIRMED intent dict (already validated/edited by the user
+via the IntentCard) and routes to the correct per-operation LangChain
+chain to generate precise MongoDB syntax.
+
+The old hallucination-scrubbing heuristics (_cleanup_filter, _is_spurious_condition,
+etc.) are removed — they addressed symptoms of open-ended prompting. With structured
+intent as input, the LLM receives confirmed field names and values so those artifacts
+no longer occur.
+"""
 
 import json
-from langchain_groq import ChatGroq
-from utils.parser import extract_mongo_query
-from prompts.query_prompt import QUERY_PROMPT
-from app.config import GROQ_API_KEY
+import logging
+from prompts.query_prompt import get_query_chain
 
-llm = ChatGroq(
-    groq_api_key=GROQ_API_KEY,
-    model_name="llama-3.1-8b-instant"
-).bind(response_format={"type": "json_object"}) # <-- THIS IS THE MAGIC BULLET
+logger = logging.getLogger(__name__)
 
 
-def _is_spurious_condition(value) -> bool:
-    """Return True if a field value is a bare \\d{4} regex — always a hallucination."""
-    if not isinstance(value, dict):
-        return False
-    regex = value.get("$regex", "")
-    return regex in (r"\d{4}", r"\\d{4}")
-
-
-def _get_regex_value(condition: dict) -> str:
-    """Extract the $regex string from a single-field condition dict, or '' if none."""
-    if not isinstance(condition, dict):
-        return ""
-    for val in condition.values():
-        if isinstance(val, dict) and "$regex" in val:
-            return val["$regex"]
-    return ""
-
-
-def _is_contaminated_by(cond_a: dict, cond_b: dict) -> bool:
+def _build_chain_inputs(confirmed_intent: dict, schema: dict) -> dict:
     """
-    Return True if cond_a's regex is an alternation that contains cond_b's regex
-    as one of its terms — meaning a proper noun from cond_b leaked into cond_a.
-    Example: cond_a genres regex "roberta|romantic|romance", cond_b title regex "roberta"
-    → cond_a is contaminated.
+    Convert the confirmed intent dict into keyword arguments expected by the chain.
+    All chains share the same base keys; each ignores keys it doesn't use.
     """
-    regex_a = _get_regex_value(cond_a)
-    regex_b = _get_regex_value(cond_b)
-    if not regex_a or not regex_b or "|" not in regex_a:
-        return False
-    # cond_b must be a simple term (no alternation — it's a proper noun / identifier)
-    if "|" in regex_b:
-        return False
-    terms_a = [t.strip().lower() for t in regex_a.split("|")]
-    return regex_b.strip().lower() in terms_a
+    collection   = confirmed_intent.get("collection", "")
+    schema_fields = json.dumps(schema.get(collection, []))
+
+    # Serialise filters list for prompt injection
+    filters_text = ""
+    filters = confirmed_intent.get("filters") or []
+    if filters:
+        lines = []
+        for f in filters:
+            lines.append(
+                f"  - {f.get('field', '?')} {f.get('operator', 'eq')} {f.get('value', '?')}"
+            )
+        filters_text = "\n".join(lines)
+    else:
+        filters_text = "  (none)"
+
+    # Serialise projection
+    projection_list = confirmed_intent.get("projection") or []
+    projection_text = ", ".join(projection_list) if projection_list else "(all fields)"
+
+    # Serialise sort
+    sort_info = confirmed_intent.get("sort") or {}
+    sort_text = (
+        f"{sort_info.get('field')} {sort_info.get('direction', 'asc')}"
+        if sort_info and sort_info.get("field")
+        else "(none)"
+    )
+
+    # Serialise aggregate stages
+    agg_stages = confirmed_intent.get("aggregate_stages") or []
+    agg_stages_text = ", ".join(agg_stages) if agg_stages else "(none)"
+
+    return {
+        "collection":       collection,
+        "schema_fields":    schema_fields,
+        "goal":             confirmed_intent.get("goal", ""),
+        "filters":          filters_text,
+        "projection":       projection_text,
+        "sort":             sort_text,
+        "limit":            confirmed_intent.get("limit") or "(none)",
+        "aggregate_stages": agg_stages_text,
+    }
 
 
-def _strip_spurious(d: dict) -> dict:
-    """Remove any top-level key whose value is a spurious condition."""
-    return {k: v for k, v in d.items() if not _is_spurious_condition(v)}
-
-
-def _cleanup_filter(filter_dict: dict) -> dict:
+def generate_query(confirmed_intent: dict, schema: dict) -> dict:
     """
-    Strip hallucinated conditions from LLM-generated filters.
-    1. Removes bare \\d{4} regex conditions (top-level and inside $and).
-    2. Removes any condition whose alternation regex is contaminated by a proper noun
-       that also appears as a simpler regex in another condition (e.g. genres leaking title).
+    Generate a MongoDB query dict from a confirmed intent.
+
+    Args:
+        confirmed_intent: The structured intent dict returned by extract_intent()
+                          and potentially edited by the user via the IntentCard.
+        schema:           Full DB schema dict {collection: [fields]}.
+
+    Returns:
+        A MongoDB query dict ready for validation and execution.
+        Returns {"error": "..."} on failure — never raises.
     """
-    if not isinstance(filter_dict, dict):
-        return filter_dict
-
-    if "$and" in filter_dict:
-        conditions = [
-            _strip_spurious(c) if isinstance(c, dict) else c
-            for c in filter_dict["$and"]
-        ]
-        conditions = [c for c in conditions if c]  # drop empties
-
-        # Detect which conditions are contaminated by a proper noun from another condition
-        to_remove = set()
-        for i, cond_a in enumerate(conditions):
-            for j, cond_b in enumerate(conditions):
-                if i != j and _is_contaminated_by(cond_a, cond_b):
-                    to_remove.add(i)
-
-        conditions = [c for idx, c in enumerate(conditions) if idx not in to_remove]
-
-        if len(conditions) == 0:
-            return {}
-        if len(conditions) == 1:
-            return conditions[0]
-        return {"$and": conditions}
-
-    # Top-level: remove any key whose value matches the spurious pattern
-    return _strip_spurious(filter_dict)
-
-def generate_query(user_query, schema, feedback=None, history=None):
-    if feedback:
-        user_query = f"{user_query}\n\n[Previous attempt failed: {feedback}. Fix the query and try again.]"
-    history_text = ""
-    if history:
-        history_text = "\n".join(
-            f"User: {turn['user']}\nGenerated Query: {turn['query']}" for turn in history
-        )
-    prompt = QUERY_PROMPT.format(schema=schema, user_query=user_query, history=history_text)
-    
-    # Get the response
-    response = llm.invoke(prompt)
-    raw_output = response.content.strip()
-
-    print("\n" + "="*50)
-    print("RAW LLM OUTPUT:")
-    print(raw_output)
-    print("="*50 + "\n")
-
-    # Get the string version of the query from parser
-    query_string = extract_mongo_query(raw_output)
+    operation = confirmed_intent.get("operation", "find")
 
     try:
-        # Convert the string into a real Python dict
-        clean_query = json.loads(query_string)
-    except Exception as e:
-        print(f"JSON Parse Error: {e}")
-        clean_query = {}
+        chain  = get_query_chain(operation)
+        inputs = _build_chain_inputs(confirmed_intent, schema)
+        result = chain.invoke(inputs)
 
-    # Strip hallucinated conditions (e.g. spurious released: {$regex: \d{4}})
-    if isinstance(clean_query, dict) and "filter" in clean_query:
-        clean_query["filter"] = _cleanup_filter(clean_query["filter"])
+        if not isinstance(result, dict):
+            logger.error("[QueryAgent] LLM returned non-dict: %r", result)
+            return {"error": "LLM output was not a valid JSON object."}
 
-    print(f"Final Cleaned Query: {clean_query}")
-    return clean_query
+        logger.info("[QueryAgent] op=%s collection=%s", operation, result.get("collection"))
+        return result
+
+    except ValueError as ve:
+        # Unknown operation
+        logger.error("[QueryAgent] %s", ve)
+        return {"error": str(ve)}
+    except Exception as exc:
+        logger.error("[QueryAgent] generation failed: %s", exc)
+        return {"error": f"Query generation failed: {exc}"}
