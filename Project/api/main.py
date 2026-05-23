@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Header, Request
+from fastapi import FastAPI, HTTPException, Header, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -9,11 +9,20 @@ import json
 import platform
 import traceback
 from pathlib import Path
+
+# Add project root to sys.path so we can import from 'api', 'database', 'agents', etc.
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from dotenv import load_dotenv
+from api.routes.auth import router as auth_router
+from api.routes.workspaces import router as workspaces_router
+from api.dependencies import get_current_user
+from api.utils.encryption import decrypt_uri
+from bson import ObjectId
+
+
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from database.mongo_client import get_db, get_db_from_uri
 from database.sql_client import get_sql_engine
@@ -24,6 +33,9 @@ from agents.schema_agent import get_schema
 from agents.visualization_agent import generate_visualization_config
 
 app = FastAPI(title="IntelliQuery API", version="1.0.0")
+
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(workspaces_router, prefix="/workspaces", tags=["Workspaces"])
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -70,18 +82,34 @@ async def health_check():
 
 @app.get("/schema")
 async def get_db_schema(
-    x_mongo_uri: Optional[str] = Header(default=None),
-    x_mongo_db:  Optional[str] = Header(default=None),
-    x_sql_uri:   Optional[str] = Header(default=None),
-    x_db_type:   Optional[str] = Header(default="mongodb"),
+    x_workspace_id: str = Header(..., alias="X-Workspace-Id"),
+    current_user: dict = Depends(get_current_user)
 ):
     """Return the database schema: tables/collections and their fields"""
     try:
-        if x_db_type == "sql" and x_sql_uri:
-            engine = get_sql_engine(x_sql_uri)
+        app_db = get_db()
+        
+        # Verify workspace access
+        member = app_db["workspace_members"].find_one({
+            "workspace_id": x_workspace_id,
+            "user_id": current_user["id"]
+        })
+        if not member:
+            raise HTTPException(status_code=403, detail="Not a member of this workspace")
+            
+        workspace = app_db["workspaces"].find_one({"_id": ObjectId(x_workspace_id)})
+        if not workspace:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+            
+        db_type = workspace.get("db_type", "mongodb")
+        db_uri = decrypt_uri(workspace["db_uri"])
+        db_name = workspace.get("db_name")
+
+        if db_type == "sql" and db_uri:
+            engine = get_sql_engine(db_uri)
             schema = extract_sql_schema(engine)
         else:
-            db = get_db_from_uri(x_mongo_uri, x_mongo_db) if x_mongo_uri else get_db()
+            db = get_db_from_uri(db_uri, db_name) if db_uri else app_db
             schema = get_schema(db)
         return {"schema": schema}
     except Exception as e:
@@ -90,25 +118,43 @@ async def get_db_schema(
 @app.post("/query", response_model=QueryResponse)
 async def process_query(
     request: QueryRequest,
-    x_mongo_uri: Optional[str] = Header(default=None),
-    x_mongo_db:  Optional[str] = Header(default=None),
-    x_sql_uri:   Optional[str] = Header(default=None),
-    x_db_type:   Optional[str] = Header(default="mongodb"),
+    x_workspace_id: str = Header(..., alias="X-Workspace-Id"),
+    current_user: dict = Depends(get_current_user)
 ):
     """Process natural language query and return query, explanation, and results"""
     try:
         if not request.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
 
-        history = [{"user": h.user, "query": h.query} for h in (request.history or [])]
+        app_db = get_db()
+        
+        # Verify workspace access and permission
+        member = app_db["workspace_members"].find_one({
+            "workspace_id": x_workspace_id,
+            "user_id": current_user["id"]
+        })
+        if not member:
+            raise HTTPException(status_code=403, detail="Not a member of this workspace")
+            
+        permission_level = member.get("permission", "read_only")
+            
+        workspace = app_db["workspaces"].find_one({"_id": ObjectId(x_workspace_id)})
+        if not workspace:
+            raise HTTPException(status_code=404, detail="Workspace not found")
 
-        if x_db_type == "sql" and x_sql_uri:
-            engine = get_sql_engine(x_sql_uri)
+        history = [{"user": h.user, "query": h.query} for h in (request.history or [])]
+        
+        db_type = workspace.get("db_type", "mongodb")
+        db_uri = decrypt_uri(workspace["db_uri"])
+        db_name = workspace.get("db_name")
+
+        if db_type == "sql" and db_uri:
+            engine = get_sql_engine(db_uri)
             schema = extract_sql_schema(engine)
-            response = run_sql_pipeline(engine, request.query, schema, history=history)
+            response = run_sql_pipeline(engine, request.query, schema, history=history, permission_level=permission_level)
         else:
-            db = get_db_from_uri(x_mongo_uri, x_mongo_db) if x_mongo_uri else get_db()
-            response = run_pipeline(db, request.query, history=history, confirmed=request.confirmed)
+            db = get_db_from_uri(db_uri, db_name) if db_uri else app_db
+            response = run_pipeline(db, request.query, history=history, confirmed=request.confirmed, permission_level=permission_level)
 
         if response.get("requires_confirmation"):
             return {

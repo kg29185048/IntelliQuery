@@ -1,50 +1,19 @@
 import { useState } from 'react'
 import './SignIn.css'
 
-const DB_TYPES = [
-  { value: 'mongodb',    label: 'MongoDB' },
-  { value: 'postgresql', label: 'PostgreSQL' },
-  { value: 'mysql',      label: 'MySQL' },
-  { value: 'sqlite',     label: 'SQLite' },
-]
-
-const SQL_TYPES = new Set(['postgresql', 'mysql', 'sqlite'])
-
-const SQL_PLACEHOLDERS = {
-  postgresql: 'postgresql+psycopg2://user:pass@host:5432/dbname',
-  mysql:      'mysql+pymysql://user:pass@host:3306/dbname',
-  sqlite:     'sqlite:////absolute/path/to/database.db',
-}
-
 const SignIn = ({ onSignIn }) => {
-  const [form, setForm] = useState({
-    name: '', email: '', password: '',
-    dbType: 'mongodb',
-    mongoUri: '',
-    mongoDbName: '',
-    sqlUri: '',
-  })
+  const [isLogin, setIsLogin] = useState(true)
+  const [form, setForm] = useState({ name: '', email: '', password: '' })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [globalError, setGlobalError] = useState('')
 
-  const isSql = SQL_TYPES.has(form.dbType)
-
   const validate = () => {
     const e = {}
-    if (!form.name.trim()) e.name = 'Name is required'
+    if (!isLogin && !form.name.trim()) e.name = 'Name is required'
     if (!form.email.trim()) e.email = 'Email is required'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Enter a valid email'
     if (!form.password) e.password = 'Password is required'
-    else if (form.password.length < 6) e.password = 'At least 6 characters'
-
-    if (!isSql) {
-      if (!form.mongoUri.trim()) e.mongoUri = 'MongoDB URI is required'
-      else if (!form.mongoUri.startsWith('mongodb')) e.mongoUri = 'Must start with mongodb:// or mongodb+srv://'
-      if (!form.mongoDbName.trim()) e.mongoDbName = 'Database name is required'
-    } else {
-      if (!form.sqlUri.trim()) e.sqlUri = 'Connection URI is required'
-    }
     return e
   }
 
@@ -55,19 +24,26 @@ const SignIn = ({ onSignIn }) => {
     setErrors({})
     setGlobalError('')
     setLoading(true)
+
     try {
-      const res = await fetch('/api/health')
-      if (!res.ok) throw new Error()
-      onSignIn({
-        name:        form.name,
-        email:       form.email,
-        dbType:      form.dbType,
-        mongoUri:    isSql ? '' : form.mongoUri,
-        mongoDbName: isSql ? '' : form.mongoDbName,
-        sqlUri:      isSql ? form.sqlUri : '',
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup'
+      const payload = isLogin 
+        ? { email: form.email, password: form.password }
+        : { name: form.name, email: form.email, password: form.password }
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       })
-    } catch {
-      setGlobalError('Could not reach backend. Make sure it is running.')
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.detail || 'Authentication failed')
+
+      // the backend returns { token: "...", user: { id, name, email } }
+      onSignIn(data)
+    } catch (err) {
+      setGlobalError(err.message || 'Could not reach backend. Make sure it is running.')
     } finally {
       setLoading(false)
     }
@@ -78,8 +54,6 @@ const SignIn = ({ onSignIn }) => {
     setErrors(prev => ({ ...prev, [field]: '' }))
   }
 
-  const setDbType = (val) => setForm(prev => ({ ...prev, dbType: val }))
-
   return (
     <div className="signin-shell">
       <div className="signin-card">
@@ -88,20 +62,36 @@ const SignIn = ({ onSignIn }) => {
           <div className="signin-tagline">Natural Language → Any Database</div>
         </div>
 
+        <div className="signin-tabs">
+          <button 
+            type="button" 
+            className={`signin-tab ${isLogin ? 'active' : ''}`}
+            onClick={() => { setIsLogin(true); setErrors({}); setGlobalError(''); }}
+          >
+            Login
+          </button>
+          <button 
+            type="button" 
+            className={`signin-tab ${!isLogin ? 'active' : ''}`}
+            onClick={() => { setIsLogin(false); setErrors({}); setGlobalError(''); }}
+          >
+            Sign Up
+          </button>
+        </div>
+
         <form className="signin-form" onSubmit={handleSubmit} noValidate>
+          {!isLogin && (
+            <div className="signin-field">
+              <label className="signin-label">Name</label>
+              <input
+                className={`signin-input ${errors.name ? 'signin-input--error' : ''}`}
+                type="text" placeholder="Your name" value={form.name}
+                onChange={set('name')} autoComplete="name"
+              />
+              {errors.name && <span className="signin-error">{errors.name}</span>}
+            </div>
+          )}
 
-          {/* Name */}
-          <div className="signin-field">
-            <label className="signin-label">Name</label>
-            <input
-              className={`signin-input ${errors.name ? 'signin-input--error' : ''}`}
-              type="text" placeholder="Your name" value={form.name}
-              onChange={set('name')} autoComplete="name"
-            />
-            {errors.name && <span className="signin-error">{errors.name}</span>}
-          </div>
-
-          {/* Email */}
           <div className="signin-field">
             <label className="signin-label">Email</label>
             <input
@@ -112,7 +102,6 @@ const SignIn = ({ onSignIn }) => {
             {errors.email && <span className="signin-error">{errors.email}</span>}
           </div>
 
-          {/* Password */}
           <div className="signin-field">
             <label className="signin-label">Password</label>
             <input
@@ -123,72 +112,10 @@ const SignIn = ({ onSignIn }) => {
             {errors.password && <span className="signin-error">{errors.password}</span>}
           </div>
 
-          {/* DB Type selector */}
-          <div className="signin-field">
-            <label className="signin-label">Database Type</label>
-            <div className="signin-db-tabs">
-              {DB_TYPES.map(db => (
-                <button
-                  key={db.value}
-                  type="button"
-                  className={`signin-db-tab ${form.dbType === db.value ? 'signin-db-tab--active' : ''}`}
-                  onClick={() => setDbType(db.value)}
-                >
-                  {db.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* MongoDB URI + DB name */}
-          {!isSql && (
-            <>
-              <div className="signin-field">
-                <label className="signin-label">MongoDB URI</label>
-                <input
-                  className={`signin-input signin-input--mono ${errors.mongoUri ? 'signin-input--error' : ''}`}
-                  type="text"
-                  placeholder="mongodb+srv://user:pass@cluster.mongodb.net"
-                  value={form.mongoUri} onChange={set('mongoUri')}
-                  autoComplete="off" spellCheck={false}
-                />
-                {errors.mongoUri && <span className="signin-error">{errors.mongoUri}</span>}
-                <span className="signin-hint">Connection string is used locally — never stored.</span>
-              </div>
-              <div className="signin-field">
-                <label className="signin-label">Database Name</label>
-                <input
-                  className={`signin-input ${errors.mongoDbName ? 'signin-input--error' : ''}`}
-                  type="text"
-                  placeholder="e.g. sample_mflix"
-                  value={form.mongoDbName} onChange={set('mongoDbName')}
-                  autoComplete="off" spellCheck={false}
-                />
-                {errors.mongoDbName && <span className="signin-error">{errors.mongoDbName}</span>}
-              </div>
-            </>
-          )}
-
-          {/* SQL URI */}
-          {isSql && (
-            <div className="signin-field">
-              <label className="signin-label">Connection URI</label>
-              <input
-                className={`signin-input signin-input--mono ${errors.sqlUri ? 'signin-input--error' : ''}`}
-                type="text"
-                placeholder={SQL_PLACEHOLDERS[form.dbType]}
-                value={form.sqlUri} onChange={set('sqlUri')}
-                autoComplete="off" spellCheck={false}
-              />
-              {errors.sqlUri && <span className="signin-error">{errors.sqlUri}</span>}
-              <span className="signin-hint">SQLAlchemy connection string — used locally, never stored.</span>
-            </div>
-          )}
-
           {globalError && <div className="signin-global-error">{globalError}</div>}
 
           <button className="signin-btn" type="submit" disabled={loading}>
-            {loading ? <span className="signin-spinner" /> : 'Continue'}
+            {loading ? <span className="signin-spinner" /> : (isLogin ? 'Login' : 'Sign Up')}
           </button>
         </form>
       </div>

@@ -1,26 +1,22 @@
 import { useEffect, useState } from 'react'
 import './Sidebar.css'
 
-const Sidebar = ({ open, onClear, mongoUri, mongoDbName, sqlUri, dbType = 'mongodb' }) => {
+const Sidebar = ({ open, onClear, workspaceId, dbType = 'mongodb', token }) => {
   const [schema, setSchema] = useState(null)
   const [loading, setLoading] = useState(false)
   const [schemaError, setSchemaError] = useState('')
   const [expanded, setExpanded] = useState({})
 
   useEffect(() => {
-    if (dbType === 'mongodb' && !mongoUri) return
-    if (dbType !== 'mongodb' && !sqlUri) return
+    if (!workspaceId || !token) return
 
     const fetchSchema = async () => {
       setLoading(true)
       setSchemaError('')
       setSchema(null)
-      const headers = { 'X-Db-Type': dbType }
-      if (dbType === 'mongodb') {
-        headers['X-Mongo-Uri'] = mongoUri
-        if (mongoDbName) headers['X-Mongo-Db'] = mongoDbName
-      } else {
-        headers['X-Sql-Uri'] = sqlUri
+      const headers = { 
+          'X-Workspace-Id': workspaceId,
+          'Authorization': `Bearer ${token}`
       }
       try {
         const res = await fetch('/api/schema', { headers })
@@ -37,7 +33,7 @@ const Sidebar = ({ open, onClear, mongoUri, mongoDbName, sqlUri, dbType = 'mongo
       }
     }
     fetchSchema()
-  }, [mongoUri, mongoDbName, sqlUri, dbType])
+  }, [workspaceId, token, dbType])
 
   const toggle = (col) => setExpanded(prev => ({ ...prev, [col]: !prev[col] }))
 

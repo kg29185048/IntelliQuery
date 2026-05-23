@@ -51,6 +51,7 @@ class PipelineState(TypedDict):
     relevance_reason: Optional[str]
     confirmed: Optional[bool]
     requires_confirmation: Optional[bool]
+    permission_level: Optional[str]
 
 
 # =========================================================
@@ -138,6 +139,10 @@ def execution_node(state: PipelineState) -> PipelineState:
     collection = db[collection_name]
 
     try:
+        # Permission check
+        if operation in ["insert", "update", "delete", "drop"] and state.get("permission_level") == "read_only":
+            return {**state, "error": "Permission Denied: You have read-only access to this workspace. Modifying the database is not allowed."}
+
         if operation == "insert":
             data = query_dict.get("data", {})
             if not data:
@@ -271,7 +276,7 @@ _compiled_graph = build_graph()
 # =========================================================
 # PUBLIC ENTRY POINT (keeps existing interface intact)
 # =========================================================
-def run_pipeline(db, user_query: str, history: list = None, confirmed: bool = False) -> dict:
+def run_pipeline(db, user_query: str, history: list = None, confirmed: bool = False, permission_level: str = "read_only") -> dict:
     print("\nUser Query:", user_query)
 
     initial_state: PipelineState = {
@@ -290,6 +295,7 @@ def run_pipeline(db, user_query: str, history: list = None, confirmed: bool = Fa
         "relevance_reason": None,
         "confirmed": confirmed,
         "requires_confirmation": None,
+        "permission_level": permission_level,
     }
 
     final_state = _compiled_graph.invoke(initial_state)

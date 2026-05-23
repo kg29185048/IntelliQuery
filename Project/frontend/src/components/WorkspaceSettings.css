@@ -1,0 +1,147 @@
+.settings-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.settings-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: var(--text-1);
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.8rem;
+  color: var(--text-3);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.close-btn:hover {
+  color: var(--text-1);
+}
+
+.settings-content {
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.ws-details {
+  background: var(--surface-2);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  margin-bottom: 2rem;
+}
+
+.ws-details p {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-2);
+}
+
+.ws-details strong {
+  color: var(--text-1);
+  display: inline-block;
+  width: 100px;
+}
+
+.join-code {
+  background: rgba(129, 140, 248, 0.15);
+  color: var(--accent);
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.hint {
+  font-size: 0.8rem;
+  color: var(--text-3);
+  margin-top: 1rem !important;
+  margin-bottom: 0 !important;
+}
+
+.settings-content h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: var(--text-1);
+}
+
+.members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.member-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-weight: 600;
+  color: var(--text-1);
+}
+
+.member-email {
+  font-size: 0.85rem;
+  color: var(--text-3);
+  margin-top: 0.2rem;
+}
+
+.member-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.role-badge {
+  font-size: 0.75rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-2);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.permission-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.permission-select:focus {
+  border-color: var(--accent);
+}
