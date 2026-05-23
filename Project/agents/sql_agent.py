@@ -68,7 +68,7 @@ def _schema_to_text(schema: dict) -> str:
     return "\n".join(lines)
 
 
-def run_sql_pipeline(engine, user_query: str, schema: dict, history: list = None) -> dict:
+def run_sql_pipeline(engine, user_query: str, schema: dict, history: list = None, permission_level: str = "read_only") -> dict:
     """
     Full SQL pipeline. Returns:
       {"query": {"sql": ..., "table": ...}, "explanation": ..., "result": [...]}
@@ -100,6 +100,11 @@ def run_sql_pipeline(engine, user_query: str, schema: dict, history: list = None
     sql = query_dict.get("sql", "").strip()
     if not sql:
         return {"error": "LLM returned an empty SQL string."}
+        
+    # Permission check for SQL
+    if permission_level == "read_only":
+        if not sql.upper().startswith("SELECT"):
+            return {"error": "Permission Denied: You have read-only access to this workspace. Only SELECT queries are allowed."}
 
     # 2. Execute SQL
     try:

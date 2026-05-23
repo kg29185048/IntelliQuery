@@ -4,40 +4,41 @@ import ChatMessage from './components/ChatMessage'
 import ChatInput from './components/ChatInput'
 import SignIn from './components/SignIn'
 import McpModal from './components/McpModal'
+import Dashboard from './components/Dashboard'
+import WorkspaceSettings from './components/WorkspaceSettings'
 import './App.css'
 
 function App() {
-  const [user, setUser] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem('iq_user')) } catch { return null }
+  const [authData, setAuthData] = useState(() => {
+    try { return JSON.parse(sessionStorage.getItem('iq_auth')) } catch { return null }
   })
+  
+  const user = authData?.user
+  const token = authData?.token
+  
+  const [currentWorkspace, setCurrentWorkspace] = useState(null)
+  
   const [messages, setMessages] = useState(() => {
     try {
-      const u = JSON.parse(sessionStorage.getItem('iq_user'))
-      if (!u?.email) return []
-      return JSON.parse(localStorage.getItem(`iq_history_${u.email}`)) || []
+      if (!user?.email || !currentWorkspace?.id) return []
+      return JSON.parse(localStorage.getItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`)) || []
     } catch { return [] }
   })
   const [loading, setLoading] = useState(false)
   const [backendStatus, setBackendStatus] = useState('checking')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mcpModalOpen, setMcpModalOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [schema, setSchema] = useState({})   // cached schema for IntentCard collections
   const chatEndRef = useRef(null)
 
-  const mongoUri    = user?.mongoUri    ?? ''
-  const mongoDbName = user?.mongoDbName ?? ''
-  const sqlUri      = user?.sqlUri      ?? ''
-  const dbType      = user?.dbType      ?? 'mongodb'
+  const dbType = currentWorkspace?.db_type ?? 'mongodb'
 
-  const buildDbHeaders = () => {
-    const h = { 'X-Db-Type': dbType }
-    if (dbType === 'mongodb') {
-      h['X-Mongo-Uri'] = mongoUri
-      if (mongoDbName) h['X-Mongo-Db'] = mongoDbName
-    } else {
-      h['X-Sql-Uri'] = sqlUri
+  const buildHeaders = () => {
+    return {
+      'Authorization': `Bearer ${token}`,
+      'X-Workspace-Id': currentWorkspace?.id,
     }
-    return h
   }
 
   // llm history format: [{user, query}]
@@ -47,16 +48,17 @@ function App() {
     .map(m => ({ user: m.userQuery, query: JSON.stringify(m.data.query) }))
 
   useEffect(() => {
-    if (!user) return
+    if (!token) return
     const checkBackend = async () => {
       try {
-        const res = await fetch('/api/health', { headers: buildDbHeaders() })
+        const res = await fetch('/api/health')
         setBackendStatus(res.ok ? 'online' : 'offline')
       } catch {
         setBackendStatus('offline')
       }
     }
     checkBackend()
+  }, [token])
 
     // Fetch schema for collection list in IntentCard
     const fetchSchema = async () => {
@@ -75,20 +77,35 @@ function App() {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // Persist chat history to localStorage scoped to the signed-in user
+  // Persist chat history to localStorage scoped to the user and workspace
   useEffect(() => {
-    if (!user?.email) return
-    try { localStorage.setItem(`iq_history_${user.email}`, JSON.stringify(messages)) } catch {}
-  }, [messages, user?.email])
+    if (!user?.email || !currentWorkspace?.id) return
+    try { localStorage.setItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`, JSON.stringify(messages)) } catch {}
+  }, [messages, user?.email, currentWorkspace?.id])
+  
+  // When workspace changes, load its history
+  useEffect(() => {
+    if (!user?.email || !currentWorkspace?.id) {
+        setMessages([])
+        return
+    }
+    try {
+        const hist = JSON.parse(localStorage.getItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`)) || []
+        setMessages(hist)
+    } catch {
+        setMessages([])
+    }
+  }, [currentWorkspace?.id, user?.email])
 
-  const handleSignIn = (userData) => {
-    sessionStorage.setItem('iq_user', JSON.stringify(userData))
-    setUser(userData)
+  const handleSignIn = (data) => {
+    sessionStorage.setItem('iq_auth', JSON.stringify(data))
+    setAuthData(data)
   }
 
   const handleSignOut = () => {
-    sessionStorage.removeItem('iq_user')
-    setUser(null)
+    sessionStorage.removeItem('iq_auth')
+    setAuthData(null)
+    setCurrentWorkspace(null)
     setMessages([])
     setBackendStatus('checking')
   }
@@ -100,7 +117,7 @@ function App() {
     try {
       const response = await fetch('/api/extract-intent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...buildDbHeaders() },
+        headers: { 'Content-Type': 'application/json', ...buildHeaders() },
         body: JSON.stringify({ query, history: llmHistory })
       })
       let data
@@ -207,7 +224,7 @@ function App() {
     try {
       const response = await fetch('/api/query', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...buildDbHeaders() },
+        headers: { 'Content-Type': 'application/json', ...buildHeaders() },
         body: JSON.stringify({ query: originalQuery, history: llmHistory, confirmed: true })
       })
       let data
@@ -245,10 +262,13 @@ function App() {
 
   const handleClear = () => {
     setMessages([])
-    if (user?.email) localStorage.removeItem(`iq_history_${user.email}`)
+    if (user?.email && currentWorkspace?.id) {
+        localStorage.removeItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`)
+    }
   }
 
-  if (!user) return <SignIn onSignIn={handleSignIn} />
+  if (!authData) return <SignIn onSignIn={handleSignIn} />
+  if (!currentWorkspace) return <Dashboard user={user} token={token} onSelectWorkspace={setCurrentWorkspace} onSignOut={handleSignOut} />
 
   const statusColor = { checking: '#f0ad4e', online: '#28a745', offline: '#dc3545' }
   const statusLabel = { checking: 'Checking...', online: 'Backend Online', offline: 'Backend Offline' }
@@ -267,7 +287,7 @@ function App() {
       )}
 
       {/* Sidebar */}
-      <Sidebar open={sidebarOpen} onClear={handleClear} mongoUri={mongoUri} mongoDbName={mongoDbName} sqlUri={sqlUri} dbType={dbType} />
+      <Sidebar open={sidebarOpen} onClear={handleClear} workspaceId={currentWorkspace.id} dbType={dbType} token={token} />
 
       {/* Main area */}
       <div className={`main-area ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
@@ -283,7 +303,7 @@ function App() {
           <div className="navbar-brand">
             <div>
               <div className="navbar-title">IntelliQuery</div>
-              <div className="navbar-subtitle">Natural Language → {dbType === 'mongodb' ? 'MongoDB' : dbType.charAt(0).toUpperCase() + dbType.slice(1)}</div>
+              <div className="navbar-subtitle">{currentWorkspace.name} ({dbType === 'mongodb' ? 'MongoDB' : dbType.charAt(0).toUpperCase() + dbType.slice(1)})</div>
             </div>
           </div>
           <div className="navbar-right">
@@ -291,11 +311,16 @@ function App() {
               <span className="status-dot" style={{ background: statusColor[backendStatus] }} />
               {statusLabel[backendStatus]}
             </div>
+            {currentWorkspace.role === 'admin' && (
+              <button className="btn-outline" onClick={() => setSettingsOpen(true)}>
+                Members
+              </button>
+            )}
             <button className="mcp-nav-btn" onClick={() => setMcpModalOpen(true)} title="Connect to Claude Desktop">
               Claude{localStorage.getItem('iq_mcp_groq_key') ? <span className="mcp-nav-dot" /> : null}
             </button>
-            <button className="signout-btn" onClick={handleSignOut} title="Sign out">
-              <span className="signout-name">{user.name}</span>
+            <button className="signout-btn" onClick={() => setCurrentWorkspace(null)} title="Back to Dashboard">
+              <span className="signout-name">Dashboard</span>
               <span className="signout-arrow">↩</span>
             </button>
           </div>
@@ -355,8 +380,17 @@ function App() {
       {/* MCP Connect Modal */}
       {mcpModalOpen && (
         <McpModal
-          defaultMongoUri={mongoUri}
+          defaultMongoUri={""}
           onClose={() => setMcpModalOpen(false)}
+        />
+      )}
+
+      {/* Workspace Settings Modal */}
+      {settingsOpen && (
+        <WorkspaceSettings 
+          workspace={currentWorkspace} 
+          token={token} 
+          onClose={() => setSettingsOpen(false)} 
         />
       )}
     </div>

@@ -43,6 +43,34 @@
   letter-spacing: 0.03em;
 }
 
+.signin-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.signin-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.7rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.signin-tab:hover {
+  color: var(--text-2);
+}
+
+.signin-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 .signin-form {
   display: flex;
   flex-direction: column;
