@@ -155,16 +155,15 @@ async def process_query(
             response = run_sql_pipeline(engine, request.query, schema, history=history, permission_level=permission_level)
         else:
             db = get_db_from_uri(db_uri, db_name) if db_uri else app_db
-            response = run_pipeline(db, request.query, history=history, confirmed=request.confirmed, permission_level=permission_level)
-            db = get_db_from_uri(x_mongo_uri, x_mongo_db) if x_mongo_uri else get_db()
+
             response = run_pipeline(
                 db,
                 request.query,
                 history=history,
                 confirmed=request.confirmed,
                 confirmed_intent=request.confirmed_intent,
+                permission_level=permission_level,
             )
-
         if response.get("requires_confirmation"):
             return {
                 "query": response.get("query"),
@@ -219,9 +218,8 @@ class ExtractIntentRequest(BaseModel):
 @app.post("/extract-intent")
 async def extract_intent_endpoint(
     request: ExtractIntentRequest,
-    x_mongo_uri: Optional[str] = Header(default=None),
-    x_mongo_db:  Optional[str] = Header(default=None),
-    x_db_type:   Optional[str] = Header(default="mongodb"),
+    x_workspace_id: str = Header(..., alias="X-Workspace-Id"),
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Phase 1 — extract structured intent from a natural-language query.
@@ -232,11 +230,28 @@ async def extract_intent_endpoint(
         if not request.query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
 
-        if x_db_type == "sql":
-            # SQL path does not support intent extraction yet
+        app_db = get_db()
+
+        # Verify workspace access
+        member = app_db["workspace_members"].find_one({
+            "workspace_id": x_workspace_id,
+            "user_id": current_user["id"]
+        })
+        if not member:
+            raise HTTPException(status_code=403, detail="Not a member of this workspace")
+
+        workspace = app_db["workspaces"].find_one({"_id": ObjectId(x_workspace_id)})
+        if not workspace:
+            raise HTTPException(status_code=404, detail="Workspace not found")
+
+        db_type = workspace.get("db_type", "mongodb")
+        if db_type == "sql":
             raise HTTPException(status_code=400, detail="Intent extraction is only supported for MongoDB.")
 
-        db = get_db_from_uri(x_mongo_uri, x_mongo_db) if x_mongo_uri else get_db()
+        db_uri = decrypt_uri(workspace["db_uri"])
+        db_name = workspace.get("db_name")
+        db = get_db_from_uri(db_uri, db_name) if db_uri else app_db
+
         history = [{"user": h.user, "query": h.query} for h in (request.history or [])]
         response = extract_intent_pipeline(db, request.query, history=history)
         return response

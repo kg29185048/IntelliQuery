@@ -60,10 +60,12 @@ function App() {
     checkBackend()
   }, [token])
 
-    // Fetch schema for collection list in IntentCard
+  // Fetch schema for collection list in IntentCard
+  useEffect(() => {
+    if (!token || !currentWorkspace?.id) return
     const fetchSchema = async () => {
       try {
-        const res = await fetch('/api/schema', { headers: buildDbHeaders() })
+        const res = await fetch('/api/schema', { headers: buildHeaders() })
         if (res.ok) {
           const data = await res.json()
           setSchema(data.schema || {})
@@ -71,7 +73,7 @@ function App() {
       } catch {}
     }
     fetchSchema()
-  }, [user])
+  }, [token, currentWorkspace?.id])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -160,7 +162,7 @@ function App() {
     try {
       const response = await fetch('/api/query', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...buildDbHeaders() },
+        headers: { 'Content-Type': 'application/json', ...buildHeaders() },
         body: JSON.stringify({
           query: originalQuery,
           history: llmHistory,
