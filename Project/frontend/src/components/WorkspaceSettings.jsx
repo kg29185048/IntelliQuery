@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
 import './WorkspaceSettings.css'
 
-const WorkspaceSettings = ({ workspace, token, onClose }) => {
+const WorkspaceSettings = ({ workspace, user, token, onClose, onWorkspaceDeleted }) => {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   const fetchMembers = async () => {
+    if (workspace.role !== 'admin') {
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch(`/api/workspaces/${workspace.id}/members`, {
@@ -46,6 +50,27 @@ const WorkspaceSettings = ({ workspace, token, onClose }) => {
     }
   }
 
+  const handleRemoveMember = async (userId, isSelf) => {
+    if (!window.confirm(isSelf ? "Are you sure you want to leave this workspace?" : "Are you sure you want to remove this user?")) return;
+    try {
+      const res = await fetch(`/api/workspaces/${workspace.id}/members/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.detail || 'Failed to remove member')
+      }
+      if (isSelf) {
+        if (onWorkspaceDeleted) onWorkspaceDeleted()
+      } else {
+        fetchMembers()
+      }
+    } catch (err) {
+      alert(err.message)
+    }
+  }
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="settings-modal" onClick={e => e.stopPropagation()}>
@@ -61,36 +86,84 @@ const WorkspaceSettings = ({ workspace, token, onClose }) => {
             <p className="hint">Share this code with users to let them join your workspace.</p>
           </div>
 
-          <h3>Members</h3>
-          {loading ? (
-            <p>Loading members...</p>
-          ) : error ? (
-            <p className="error-text">{error}</p>
-          ) : (
-            <div className="members-list">
-              {members.map(member => (
-                <div key={member.user_id} className="member-item">
-                  <div className="member-info">
-                    <div className="member-name">{member.name}</div>
-                    <div className="member-email">{member.email}</div>
-                  </div>
-                  <div className="member-controls">
-                    <span className="role-badge">{member.role}</span>
-                    {member.role !== 'admin' && (
-                      <select 
-                        value={member.permission} 
-                        onChange={(e) => handleUpdatePermission(member.user_id, e.target.value)}
-                        className="permission-select"
-                      >
-                        <option value="read_only">Read Only</option>
-                        <option value="read_write">Read & Write</option>
-                      </select>
-                    )}
-                  </div>
+          {workspace.role === 'admin' && (
+            <>
+              <h3>Members</h3>
+              {loading ? (
+                <p>Loading members...</p>
+              ) : error ? (
+                <p className="error-text">{error}</p>
+              ) : (
+                <div className="members-list">
+                  {members.map(member => (
+                    <div key={member.user_id} className="member-item">
+                      <div className="member-info">
+                        <div className="member-name">{member.name}</div>
+                        <div className="member-email">{member.email}</div>
+                      </div>
+                      <div className="member-controls">
+                        <span className="role-badge">{member.role}</span>
+                        {member.role !== 'admin' && (
+                          <select 
+                            value={member.permission} 
+                            onChange={(e) => handleUpdatePermission(member.user_id, e.target.value)}
+                            className="permission-select"
+                          >
+                            <option value="read_only">Read Only</option>
+                            <option value="read_write">Read & Write</option>
+                          </select>
+                        )}
+                        {workspace.role === 'admin' && member.user_id !== user.id && (
+                          <button 
+                            className="btn-danger" 
+                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                            onClick={() => handleRemoveMember(member.user_id, false)}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
+
+          {/* Actions Section */}
+          <div className="workspace-actions">
+            <button 
+              className="btn-outline-danger" 
+              onClick={() => handleRemoveMember(user.id, true)}
+            >
+              Leave Workspace
+            </button>
+
+            {workspace.role === 'admin' && (
+              <button 
+                className="btn-outline-danger" 
+                onClick={async () => {
+                  if (window.confirm(`Are you absolutely sure you want to delete the workspace "${workspace.name}"? This action cannot be undone.`)) {
+                    try {
+                      const res = await fetch(`/api/workspaces/${workspace.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                      })
+                      if (!res.ok) {
+                        const data = await res.json()
+                        throw new Error(data.detail || 'Failed to delete workspace')
+                      }
+                      if (onWorkspaceDeleted) onWorkspaceDeleted()
+                    } catch (err) {
+                      alert(err.message)
+                    }
+                  }
+                }}
+              >
+                Delete Workspace
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

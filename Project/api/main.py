@@ -113,7 +113,11 @@ async def get_db_schema(
             db = get_db_from_uri(db_uri, db_name) if db_uri else app_db
             schema = get_schema(db)
         return {"schema": schema}
+    except HTTPException:
+        raise
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/query", response_model=QueryResponse)

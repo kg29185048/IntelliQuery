@@ -21,5 +21,12 @@ def decrypt_uri(encrypted_uri: str) -> str:
     try:
         return fernet.decrypt(encrypted_uri.encode()).decode()
     except Exception:
-        # Fallback if the data wasn't encrypted (e.g. legacy data)
-        return encrypted_uri
+        # Check if the value looks like a plain URI (legacy unencrypted data)
+        if encrypted_uri.startswith(("mongodb://", "mongodb+srv://", "postgresql", "mysql", "sqlite")):
+            return encrypted_uri
+        raise ValueError(
+            "Unable to decrypt the database URI. "
+            "This workspace was likely created on a server with a different JWT_SECRET. "
+            "Ask the workspace admin to re-create the workspace on this server."
+        )
+

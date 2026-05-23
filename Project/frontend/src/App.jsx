@@ -313,11 +313,9 @@ function App() {
               <span className="status-dot" style={{ background: statusColor[backendStatus] }} />
               {statusLabel[backendStatus]}
             </div>
-            {currentWorkspace.role === 'admin' && (
-              <button className="btn-outline" onClick={() => setSettingsOpen(true)}>
-                Members
-              </button>
-            )}
+            <button className="btn-outline" onClick={() => setSettingsOpen(true)}>
+              Settings
+            </button>
             <button className="mcp-nav-btn" onClick={() => setMcpModalOpen(true)} title="Connect to Claude Desktop">
               Claude{localStorage.getItem('iq_mcp_groq_key') ? <span className="mcp-nav-dot" /> : null}
             </button>
@@ -391,8 +389,13 @@ function App() {
       {settingsOpen && (
         <WorkspaceSettings 
           workspace={currentWorkspace} 
+          user={user}
           token={token} 
           onClose={() => setSettingsOpen(false)} 
+          onWorkspaceDeleted={() => {
+            setSettingsOpen(false)
+            setCurrentWorkspace(null)
+          }}
         />
       )}
     </div>

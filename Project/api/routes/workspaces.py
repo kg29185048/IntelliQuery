@@ -212,3 +212,77 @@ async def update_member_permission(
         raise HTTPException(status_code=404, detail="Member not found in this workspace")
         
     return {"status": "success", "message": "Permissions updated"}
+
+@router.delete("/{workspace_id}")
+async def delete_workspace(workspace_id: str, current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    
+    # Verify current user is admin of this workspace
+    membership = db["workspace_members"].find_one({
+        "workspace_id": workspace_id,
+        "user_id": current_user["id"]
+    })
+    
+    if not membership or membership["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete the workspace")
+        
+    # Delete the workspace
+    result = db["workspaces"].delete_one({"_id": ObjectId(workspace_id)})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Workspace not found")
+        
+    # Delete all members associated with this workspace
+    db["workspace_members"].delete_many({"workspace_id": workspace_id})
+    
+    return {"status": "success", "message": "Workspace deleted successfully"}
+
+        
+@router.delete("/{workspace_id}/members/{user_id}")
+async def remove_member(
+    workspace_id: str, 
+    user_id: str, 
+    current_user: dict = Depends(get_current_user)
+):
+    db = get_db()
+    
+    is_self = (current_user["id"] == user_id)
+    
+    # Verify current user is an admin if they are removing someone else
+    if not is_self:
+        current_membership = db["workspace_members"].find_one({
+            "workspace_id": workspace_id,
+            "user_id": current_user["id"]
+        })
+        if not current_membership or current_membership["role"] != "admin":
+            raise HTTPException(status_code=403, detail="Only admins can remove other members")
+            
+    # Check if the target user is a member
+    target_membership = db["workspace_members"].find_one({
+        "workspace_id": workspace_id,
+        "user_id": user_id
+    })
+    
+    if not target_membership:
+        raise HTTPException(status_code=404, detail="Member not found in this workspace")
+        
+    # If the target is an admin, ensure they are not the last admin
+    if target_membership["role"] == "admin":
+        admin_count = db["workspace_members"].count_documents({
+            "workspace_id": workspace_id,
+            "role": "admin"
+        })
+        if admin_count <= 1:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot remove the last admin of the workspace. Please assign another admin or delete the workspace."
+            )
+            
+    db["workspace_members"].delete_one({
+        "workspace_id": workspace_id,
+        "user_id": user_id
+    })
+    
+    message = "You have left the workspace" if is_self else "Member removed successfully"
+    return {"status": "success", "message": message}
+
+
