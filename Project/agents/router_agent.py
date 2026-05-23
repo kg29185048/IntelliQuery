@@ -332,11 +332,6 @@ def build_graph():
 _compiled_graph = build_graph()
 
 
-# =========================================================
-# PUBLIC ENTRY POINT (keeps existing interface intact)
-# =========================================================
-def run_pipeline(db, user_query: str, history: list = None, confirmed: bool = False, permission_level: str = "read_only") -> dict:
-    print("\nUser Query:", user_query)
 # ===========================================================================
 # PUBLIC API
 # ===========================================================================
@@ -387,6 +382,7 @@ def run_pipeline(
     history:          list = None,
     confirmed:        bool = False,
     confirmed_intent: dict = None,
+    permission_level: str  = "read_only",
 ) -> dict:
     """
     Phase 2: run the full pipeline using a confirmed intent.
@@ -449,3 +445,7 @@ def run_pipeline(
         "explanation": final["explanation"],
         "result":      final["result"] if final["result"] is not None else [],
     }
+
+
+
+
