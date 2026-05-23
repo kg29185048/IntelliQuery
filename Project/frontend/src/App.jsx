@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Sidebar from './components/Sidebar'
 import ChatMessage from './components/ChatMessage'
+import ChatInput from './components/ChatInput'
 import SignIn from './components/SignIn'
 import McpModal from './components/McpModal'
 import Dashboard from './components/Dashboard'

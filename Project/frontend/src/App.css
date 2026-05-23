@@ -127,7 +127,7 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  //animation: shimmerBrand 5s linear infinite;
+  animation: shimmerBrand 5s linear infinite;
   white-space: nowrap;
   font-family: serif;  
 }
