@@ -325,3 +325,20 @@
 @keyframes spinnerRotate {
   to { transform: rotate(360deg); }
 }
+
+@media (max-width: 600px) {
+  .signin-shell {
+    padding: 1rem;
+  }
+  .signin-card {
+    padding: 1.75rem 1.25rem 1.5rem;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+  .signin-logo {
+    font-size: 1.8rem;
+  }
+  .signin-tabs {
+    flex-wrap: wrap;
+  }
+}

@@ -185,3 +185,35 @@
   background: rgba(239, 68, 68, 0.1);
   border-color: #ef4444;
 }
+
+@media (max-width: 600px) {
+  .settings-modal {
+    margin: 1rem;
+    max-height: 90vh;
+  }
+  .settings-header {
+    padding: 1.2rem 1.5rem;
+  }
+  .settings-content {
+    padding: 1.5rem;
+  }
+  .member-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .member-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .workspace-actions {
+    flex-direction: column;
+  }
+  .workspace-actions button {
+    width: 100%;
+  }
+  .ws-details strong {
+    display: block;
+    margin-bottom: 0.2rem;
+  }
+}

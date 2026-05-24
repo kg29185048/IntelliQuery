@@ -297,15 +297,6 @@
   position: relative;
   z-index: 10;
   padding: 6rem 2rem;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.home-roles {
-  position: relative;
-  z-index: 10;
-  padding: 6rem 2rem;
   background: rgba(9, 9, 11, 0.4);
   backdrop-filter: blur(20px);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -367,10 +358,20 @@
 
 @media (max-width: 768px) {
   .home-title {
-    font-size: 3rem;
+    font-size: 2.5rem;
   }
   .home-navbar {
     padding: 1rem;
+  }
+  .home-hero {
+    padding: 4rem 1rem;
+  }
+  .home-features, .home-usecases, .home-roles {
+    padding: 3rem 1.5rem;
+  }
+  .section-title {
+    font-size: 2rem;
+    margin-bottom: 2.5rem;
   }
   .home-cta-group {
     flex-direction: column;
@@ -378,6 +379,9 @@
   }
   .home-cta-group button {
     width: 100%;
+  }
+  .roles-header {
+    margin-bottom: 2.5rem;
   }
   .footer-content {
     flex-direction: column;
