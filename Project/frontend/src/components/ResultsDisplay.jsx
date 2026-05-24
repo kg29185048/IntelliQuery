@@ -10,7 +10,7 @@ const ResultsDisplay = ({ results }) => {
     if (results.length === 0) {
       return (
         <div className="results-container">
-          <h5 className="results-title">📊 Results</h5>
+          <h5 className="results-title">Results</h5>
           <p className="text-muted">No results found</p>
         </div>
       )
@@ -21,7 +21,7 @@ const ResultsDisplay = ({ results }) => {
       const keys = Object.keys(results[0])
       return (
         <div className="results-container">
-          <h5 className="results-title">📊 Results ({results.length} records)</h5>
+          <h5 className="results-title">Results ({results.length} records)</h5>
           <div className="table-responsive">
             <table className="results-table">
               <thead>
@@ -53,7 +53,7 @@ const ResultsDisplay = ({ results }) => {
     // Simple list of values
     return (
       <div className="results-container">
-        <h5 className="results-title">📊 Results ({results.length} items)</h5>
+        <h5 className="results-title">Results ({results.length} items)</h5>
         <div className="results-list">
           {results.map((item, idx) => (
             <div key={idx} className="result-item">
@@ -69,7 +69,7 @@ const ResultsDisplay = ({ results }) => {
   if (typeof results === 'object') {
     return (
       <div className="results-container">
-        <h5 className="results-title">📊 Result</h5>
+        <h5 className="results-title">Result</h5>
         <div className="result-code">
           <pre>{JSON.stringify(results, null, 2)}</pre>
         </div>
@@ -80,7 +80,7 @@ const ResultsDisplay = ({ results }) => {
   // String or other primitive
   return (
     <div className="results-container">
-      <h5 className="results-title">📊 Result</h5>
+      <h5 className="results-title">Result</h5>
       <div className="result-item">{String(results)}</div>
     </div>
   )

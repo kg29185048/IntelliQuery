@@ -33,7 +33,7 @@ const ChatMessage = ({ message, onSuggest, onConfirm, onCancel, onIntentConfirm,
         <div className="msg-row msg-row--assistant">
           <div className="msg-avatar msg-avatar--bot"><BotIcon /></div>
           <div className="msg-bubble msg-bubble--intent-resolved">
-            ✅ Intent confirmed — generating query…
+            Intent confirmed — generating query…
           </div>
         </div>
       )
@@ -87,7 +87,7 @@ const ChatMessage = ({ message, onSuggest, onConfirm, onCancel, onIntentConfirm,
 
           {resolved ? (
             <div className={`msg-confirm-resolved ${cancelled ? 'msg-confirm-resolved--cancelled' : 'msg-confirm-resolved--done'}`}>
-              {cancelled ? '🚫 Update cancelled.' : '✅ Update confirmed — executing…'}
+              {cancelled ? '🚫 Update cancelled.' : 'Update confirmed — executing…'}
             </div>
           ) : (
             <div className="msg-confirm-actions">
@@ -95,13 +95,13 @@ const ChatMessage = ({ message, onSuggest, onConfirm, onCancel, onIntentConfirm,
                 className="msg-confirm-btn msg-confirm-btn--confirm"
                 onClick={() => onConfirm && onConfirm(userQuery)}
               >
-                ✅ Confirm Update
+                Confirm Update
               </button>
               <button
                 className="msg-confirm-btn msg-confirm-btn--cancel"
                 onClick={() => onCancel && onCancel(userQuery)}
               >
-                🚫 Cancel
+                🚫Cancel
               </button>
             </div>
           )}

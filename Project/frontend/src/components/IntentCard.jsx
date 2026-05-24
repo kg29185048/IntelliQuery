@@ -62,7 +62,7 @@ const IntentCard = ({ intent: initialIntent, collections = [], onConfirm, onStar
   return (
     <SpotlightCard className="intent-card" spotlightColor="rgba(180, 151, 207, 0.25)">
       <div className="intent-card__header">
-        <span className="intent-card__icon">🧠</span>
+        <span className="intent-card__icon"></span>
         <div>
           <div className="intent-card__title">Here's what I understood</div>
           <div className="intent-card__subtitle">Review and edit before running the query</div>
@@ -230,10 +230,10 @@ const IntentCard = ({ intent: initialIntent, collections = [], onConfirm, onStar
       {/* Actions */}
       <div className="intent-actions">
         <button className="intent-btn intent-btn--confirm" onClick={handleConfirm} type="button">
-          ✅ Confirm & Run
+          Confirm & Run
         </button>
         <button className="intent-btn intent-btn--reset" onClick={onStartOver} type="button">
-          ✏️ Start Over
+           Start Over
         </button>
       </div>
     </SpotlightCard>

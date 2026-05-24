@@ -3,12 +3,13 @@ import { GoogleLogin } from '@react-oauth/google'
 import './SignIn.css'
 import Aurora from './Aurora'
 
-const SignIn = ({ onSignIn }) => {
+const SignIn = ({ onSignIn, initialView = 'login', onBackToHome }) => {
   // Views: 'login', 'signup', 'verify-signup', 'forgot-password', 'reset-password'
-  const [view, setView] = useState('login') 
+  const [view, setView] = useState(initialView) 
   const [form, setForm] = useState({ name: '', email: '', password: '', otp: '', newPassword: '' })
   const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
+
   const [globalError, setGlobalError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
 
@@ -168,13 +169,18 @@ const SignIn = ({ onSignIn }) => {
     <div className="signin-shell">
       <div className="signin-aurora-bg">
         <Aurora
-          colorStops={["#818cf8","#B497CF","#9886e0"]}
-          blend={0.5}
-          amplitude={1.0}
-          speed={1}
+          colorStops={["#4f46e5", "#7e22ce", "#ec4899"]}
+          blend={0.6}
+          amplitude={1.2}
+          speed={0.8}
         />
       </div>
       <div className="signin-card">
+        {onBackToHome && (
+          <button className="signin-back-home" onClick={onBackToHome}>
+            ← Back to Home
+          </button>
+        )}
         <div className="signin-header">
           <div className="signin-logo">IntelliQuery</div>
           <div className="signin-tagline">Natural Language → Any Database</div>
