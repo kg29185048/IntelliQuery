@@ -12,12 +12,12 @@ function App() {
   const [authData, setAuthData] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('iq_auth')) } catch { return null }
   })
-  
+
   const user = authData?.user
   const token = authData?.token
-  
+
   const [currentWorkspace, setCurrentWorkspace] = useState(null)
-  
+
   const [messages, setMessages] = useState(() => {
     try {
       if (!user?.email || !currentWorkspace?.id) return []
@@ -26,7 +26,7 @@ function App() {
   })
   const [loading, setLoading] = useState(false)
   const [backendStatus, setBackendStatus] = useState('checking')
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 900)
   const [mcpModalOpen, setMcpModalOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [schema, setSchema] = useState({})   // cached schema for IntentCard collections
@@ -60,6 +60,14 @@ function App() {
     checkBackend()
   }, [token])
 
+  // Auto-collapse sidebar on resize
+  useEffect(() => {
+    const mql = window.matchMedia('(max-width: 900px)')
+    const handleMediaChange = (e) => setSidebarOpen(!e.matches)
+    mql.addEventListener('change', handleMediaChange)
+    return () => mql.removeEventListener('change', handleMediaChange)
+  }, [])
+
   // Fetch schema for collection list in IntentCard
   useEffect(() => {
     if (!token || !currentWorkspace?.id) return
@@ -70,7 +78,7 @@ function App() {
           const data = await res.json()
           setSchema(data.schema || {})
         }
-      } catch {}
+      } catch { }
     }
     fetchSchema()
   }, [token, currentWorkspace?.id])
@@ -82,20 +90,20 @@ function App() {
   // Persist chat history to localStorage scoped to the user and workspace
   useEffect(() => {
     if (!user?.email || !currentWorkspace?.id) return
-    try { localStorage.setItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`, JSON.stringify(messages)) } catch {}
+    try { localStorage.setItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`, JSON.stringify(messages)) } catch { }
   }, [messages, user?.email, currentWorkspace?.id])
-  
+
   // When workspace changes, load its history
   useEffect(() => {
     if (!user?.email || !currentWorkspace?.id) {
-        setMessages([])
-        return
+      setMessages([])
+      return
     }
     try {
-        const hist = JSON.parse(localStorage.getItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`)) || []
-        setMessages(hist)
+      const hist = JSON.parse(localStorage.getItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`)) || []
+      setMessages(hist)
     } catch {
-        setMessages([])
+      setMessages([])
     }
   }, [currentWorkspace?.id, user?.email])
 
@@ -265,7 +273,7 @@ function App() {
   const handleClear = () => {
     setMessages([])
     if (user?.email && currentWorkspace?.id) {
-        localStorage.removeItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`)
+      localStorage.removeItem(`iq_history_${user.email}_ws_${currentWorkspace.id}`)
     }
   }
 
@@ -277,35 +285,27 @@ function App() {
 
   return (
     <div className="app-shell">
-      {/* Floating left-edge toggle — visible when sidebar is closed */}
-      {!sidebarOpen && (
-        <button className="left-edge-toggle" onClick={() => setSidebarOpen(true)} aria-label="Open sidebar">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <rect y="1" width="14" height="1.7" rx="0.85" fill="currentColor"/>
-            <rect y="6.15" width="14" height="1.7" rx="0.85" fill="currentColor"/>
-            <rect y="11.3" width="14" height="1.7" rx="0.85" fill="currentColor"/>
-          </svg>
-        </button>
-      )}
+      {/* Mobile Backdrop */}
+      {sidebarOpen && <div className="mobile-backdrop" onClick={() => setSidebarOpen(false)} />}
 
       {/* Sidebar */}
-      <Sidebar open={sidebarOpen} onClear={handleClear} workspaceId={currentWorkspace.id} dbType={dbType} token={token} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} onClear={handleClear} workspaceId={currentWorkspace.id} dbType={dbType} token={token} />
 
       {/* Main area */}
       <div className={`main-area ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         {/* Top navbar */}
         <div className="top-navbar">
-          {sidebarOpen && (
-            <button className="sidebar-toggle" onClick={() => setSidebarOpen(false)} aria-label="Close sidebar">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M2 8h12M8 2l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+          <div className="navbar-brand">
+            <button className="navbar-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle sidebar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
-          )}
-          <div className="navbar-brand">
-            <div>
-              <div className="navbar-title">IntelliQuery</div>
-              <div className="navbar-subtitle">{currentWorkspace.name} ({dbType === 'mongodb' ? 'MongoDB' : dbType.charAt(0).toUpperCase() + dbType.slice(1)})</div>
+            <div className="navbar-title">IntelliQuery</div>
+            <div className="navbar-divider" />
+            <div className="navbar-subtitle">
+              {currentWorkspace.name}
+              <span className="navbar-db-type">{dbType === 'mongodb' ? 'MongoDB' : dbType.charAt(0).toUpperCase() + dbType.slice(1)}</span>
             </div>
           </div>
           <div className="navbar-right">
@@ -313,15 +313,14 @@ function App() {
               <span className="status-dot" style={{ background: statusColor[backendStatus] }} />
               {statusLabel[backendStatus]}
             </div>
-            <button className="btn-outline" onClick={() => setSettingsOpen(true)}>
+            <button className="nav-btn hide-mobile" onClick={() => setSettingsOpen(true)}>
               Settings
             </button>
-            <button className="mcp-nav-btn" onClick={() => setMcpModalOpen(true)} title="Connect to Claude Desktop">
-              Claude{localStorage.getItem('iq_mcp_groq_key') ? <span className="mcp-nav-dot" /> : null}
+            <button className="nav-btn hide-mobile" onClick={() => setMcpModalOpen(true)} title="Connect to Claude Desktop">
+              Claude {localStorage.getItem('iq_mcp_groq_key') ? <span className="mcp-nav-dot" /> : null}
             </button>
-            <button className="signout-btn" onClick={() => setCurrentWorkspace(null)} title="Back to Dashboard">
-              <span className="signout-name">Dashboard</span>
-              <span className="signout-arrow">↩</span>
+            <button className="nav-btn nav-btn--danger" onClick={() => setCurrentWorkspace(null)} title="Back to Dashboard">
+              <span className="hide-text-mobile">Dashboard</span> <span style={{ opacity: 0.6 }}>↩</span>
             </button>
           </div>
         </div>
@@ -387,11 +386,11 @@ function App() {
 
       {/* Workspace Settings Modal */}
       {settingsOpen && (
-        <WorkspaceSettings 
-          workspace={currentWorkspace} 
+        <WorkspaceSettings
+          workspace={currentWorkspace}
           user={user}
-          token={token} 
-          onClose={() => setSettingsOpen(false)} 
+          token={token}
+          onClose={() => setSettingsOpen(false)}
           onWorkspaceDeleted={() => {
             setSettingsOpen(false)
             setCurrentWorkspace(null)

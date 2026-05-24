@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap');
+
 .signin-shell {
   min-height: 100vh;
   background: var(--bg);
@@ -5,20 +7,31 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
-  background-image:
-    linear-gradient(var(--border-soft) 1px, transparent 1px),
-    linear-gradient(90deg, var(--border-soft) 1px, transparent 1px);
-  background-size: 44px 44px;
+  position: relative;
+  overflow: hidden;
+}
+
+.signin-aurora-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
 .signin-card {
   width: 100%;
   max-width: 420px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 2.25rem 2rem 2rem;
   box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 1;
 }
 
 .signin-header {
@@ -27,13 +40,11 @@
 }
 
 .signin-logo {
-  font-size: 1.6rem;
-  font-weight: 800;
-  background: linear-gradient(100deg, #818cf8, #a5b4fc, var(--cyan));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.04em;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.05em;
 }
 
 .signin-tagline {
@@ -67,8 +78,8 @@
 }
 
 .signin-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  color: #B497CF;
+  border-bottom-color: #B497CF;
 }
 
 .signin-form {
@@ -107,8 +118,8 @@
 .signin-input::placeholder { color: var(--text-3); }
 
 .signin-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-glow);
+  border-color: #B497CF;
+  box-shadow: 0 0 0 3px rgba(180, 151, 207, 0.25);
 }
 
 .signin-input--error {
@@ -156,13 +167,13 @@
 }
 
 .signin-db-tab:hover {
-  border-color: var(--accent);
+  border-color: #B497CF;
   color: #a5b4fc;
 }
 
 .signin-db-tab--active {
-  border-color: var(--accent);
-  background: var(--accent-glow);
+  border-color: #B497CF;
+  background: rgba(180, 151, 207, 0.15);
   color: #c7d2fe;
 }
 
@@ -177,7 +188,7 @@
 
 .signin-btn {
   margin-top: 0.4rem;
-  background: var(--accent);
+  background: #9886e0;
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -186,7 +197,7 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: opacity 0.18s, transform 0.12s, background 0.15s;
+  transition: opacity 0.18s, transform 0.12s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -279,7 +290,6 @@
 .signin-btn:hover:not(:disabled) {
   opacity: 0.88;
   transform: translateY(-1px);
-  background: var(--accent-dim);
 }
 
 .signin-btn:disabled { opacity: 0.45; cursor: not-allowed; }

@@ -1,7 +1,9 @@
 .sidebar {
   width: var(--sidebar-w);
   min-width: var(--sidebar-w);
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(30, 30, 40, 0.95) 0%, rgba(17, 17, 24, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   color: var(--text-1);
   display: flex;
   flex-direction: column;
@@ -11,7 +13,8 @@
   z-index: 200;
   transition: transform 0.3s cubic-bezier(.4,0,.2,1);
   overflow: hidden;
-  border-right: 1px solid var(--border-soft);
+  border-right: 1px solid rgba(180, 151, 207, 0.15);
+  box-shadow: 4px 0 24px rgba(0,0,0,0.4);
 }
 .sidebar--closed { transform: translateX(calc(-1 * var(--sidebar-w))); }
 .sidebar--open   { transform: translateX(0); }
@@ -24,16 +27,40 @@
   padding: 1rem 0.85rem 0.75rem;
   border-bottom: 1px solid var(--border-soft);
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 .sidebar-logo {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-1);
   letter-spacing: -0.02em;
+  display: flex;
+  flex-direction: column;
 }
 .sidebar-logo small { color: var(--text-3); font-size: 0.7rem; font-weight: 400; display: block; margin-top: 2px; }
+
+.sidebar-close-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.sidebar-close-btn:hover {
+  background: var(--surface-3);
+  color: var(--text-1);
+  border-color: var(--border);
+}
 
 .btn-new-chat {
   margin: 0.65rem 0.75rem;
@@ -52,7 +79,11 @@
   transition: background 0.15s, border-color 0.15s;
   flex-shrink: 0;
 }
-.btn-new-chat:hover { background: var(--surface-3); border-color: var(--accent); }
+.btn-new-chat:hover { 
+  background: var(--surface-3); 
+  border-color: var(--accent); 
+  color: var(--text-1);
+}
 
 .sidebar-section-label {
   padding: 0.55rem 0.875rem 0.25rem;
@@ -101,7 +132,10 @@
   text-align: left;
   transition: background 0.15s, color 0.15s;
 }
-.collection-toggle:hover { background: var(--surface-2); color: var(--text-1); }
+.collection-toggle:hover { 
+  background: rgba(180, 151, 207, 0.08); 
+  color: var(--text-1); 
+}
 .field-count { color: var(--text-3); font-size: 0.7rem; white-space: nowrap; }
 
 .fields-list {

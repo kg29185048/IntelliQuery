@@ -113,8 +113,8 @@ const Dashboard = ({ user, token, onSelectWorkspace, onSignOut }) => {
         <div className="dashboard-header-content">
           <h1>Welcome, {user.name}</h1>
           <div className="dashboard-actions">
-            <button className="btn-secondary" onClick={() => setShowJoin(true)}>Join Workspace</button>
-            <button className="btn-primary" onClick={() => setShowCreate(true)}>Create Workspace</button>
+            <button className="btn-outline" onClick={() => setShowJoin(true)}>Join Workspace</button>
+            <button className="btn-outline" onClick={() => setShowCreate(true)}>Create Workspace</button>
             <button className="btn-outline signout-btn" onClick={onSignOut}>Sign Out</button>
           </div>
         </div>

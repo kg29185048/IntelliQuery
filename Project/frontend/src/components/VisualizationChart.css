@@ -3,7 +3,7 @@
 }
 
 .btn-generate-viz {
-  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  background: var(--accent);
   color: white;
   border: none;
   padding: 0.6rem 1.25rem;

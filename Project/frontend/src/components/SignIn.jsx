@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { GoogleLogin } from '@react-oauth/google'
 import './SignIn.css'
+import Aurora from './Aurora'
 
 const SignIn = ({ onSignIn }) => {
   // Views: 'login', 'signup', 'verify-signup', 'forgot-password', 'reset-password'
@@ -165,6 +166,14 @@ const SignIn = ({ onSignIn }) => {
 
   return (
     <div className="signin-shell">
+      <div className="signin-aurora-bg">
+        <Aurora
+          colorStops={["#818cf8","#B497CF","#9886e0"]}
+          blend={0.5}
+          amplitude={1.0}
+          speed={1}
+        />
+      </div>
       <div className="signin-card">
         <div className="signin-header">
           <div className="signin-logo">IntelliQuery</div>

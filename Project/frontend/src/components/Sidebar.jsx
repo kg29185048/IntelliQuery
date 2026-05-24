@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import './Sidebar.css'
 
-const Sidebar = ({ open, onClear, workspaceId, dbType = 'mongodb', token }) => {
+const Sidebar = ({ open, onClose, onClear, workspaceId, dbType = 'mongodb', token }) => {
   const [schema, setSchema] = useState(null)
   const [loading, setLoading] = useState(false)
   const [schemaError, setSchemaError] = useState('')
@@ -44,6 +44,11 @@ const Sidebar = ({ open, onClear, workspaceId, dbType = 'mongodb', token }) => {
           IntelliQuery
           <small>Natural Language → {dbType === 'mongodb' ? 'MongoDB' : dbType.charAt(0).toUpperCase() + dbType.slice(1)}</small>
         </div>
+        <button className="sidebar-close-btn" onClick={onClose} aria-label="Close sidebar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
       <button className="btn-new-chat" onClick={onClear}>

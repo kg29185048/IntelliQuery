@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './IntentCard.css'
+import SpotlightCard from './SpotlightCard'
 
 const OPERATORS = ['eq', 'ne', 'gt', 'gte', 'lt', 'lte', 'regex', 'in', 'nin']
 const OPERATIONS = ['find', 'aggregate', 'insert', 'update']
@@ -59,7 +60,7 @@ const IntentCard = ({ intent: initialIntent, collections = [], onConfirm, onStar
   const isAggregate = intent.operation === 'aggregate'
 
   return (
-    <div className="intent-card">
+    <SpotlightCard className="intent-card" spotlightColor="rgba(180, 151, 207, 0.25)">
       <div className="intent-card__header">
         <span className="intent-card__icon">🧠</span>
         <div>
@@ -235,7 +236,7 @@ const IntentCard = ({ intent: initialIntent, collections = [], onConfirm, onStar
           ✏️ Start Over
         </button>
       </div>
-    </div>
+    </SpotlightCard>
   )
 }
 

@@ -1,7 +1,8 @@
 .intent-card {
-  background: linear-gradient(135deg, #1e1f2e 0%, #252638 100%);
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  border-radius: 16px;
+  background: linear-gradient(#1e1f2e, #1e1f2e) padding-box,
+              linear-gradient(135deg, #fcebfa 0%, #cfa6cd 25%, #886286 50%, #cfa6cd 75%, #fcebfa 100%) border-box;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
   padding: 20px 24px;
   max-width: 720px;
   width: 100%;
@@ -83,7 +84,7 @@
 .intent-input {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: #e2e8f0;
   font-size: 13px;
   padding: 7px 10px;
@@ -106,7 +107,7 @@
 .intent-select {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: #e2e8f0;
   font-size: 13px;
   padding: 7px 10px;
@@ -122,7 +123,7 @@
   width: 100%;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: #e2e8f0;
   font-size: 13px;
   padding: 9px 12px;
@@ -145,7 +146,7 @@
 
 .intent-op-tab {
   padding: 5px 14px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
   color: #8b92b3;
@@ -172,7 +173,7 @@
   margin-bottom: 14px;
   padding: 14px;
   background: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -247,7 +248,7 @@
 
 .intent-stage-chip {
   padding: 5px 12px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: transparent;
   color: #8b92b3;
@@ -296,13 +297,13 @@
 }
 
 .intent-btn--confirm {
-  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  background: var(--accent);
   color: #fff;
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
 }
 
 .intent-btn--confirm:hover {
-  background: linear-gradient(135deg, #6d28d9, #4c1d95);
+  background: var(--accent-dim);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
 }
