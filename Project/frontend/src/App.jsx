@@ -6,8 +6,8 @@ import SignIn from './components/SignIn'
 import McpModal from './components/McpModal'
 import Dashboard from './components/Dashboard'
 import WorkspaceSettings from './components/WorkspaceSettings'
+import Home from './components/Home'
 import './App.css'
-
 function App() {
   const [authData, setAuthData] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('iq_auth')) } catch { return null }
@@ -31,6 +31,8 @@ function App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [schema, setSchema] = useState({})   // cached schema for IntentCard collections
   const chatEndRef = useRef(null)
+  
+  const [signInView, setSignInView] = useState(null) // null = home, 'login' or 'signup'
 
   const dbType = currentWorkspace?.db_type ?? 'mongodb'
 
@@ -277,7 +279,12 @@ function App() {
     }
   }
 
-  if (!authData) return <SignIn onSignIn={handleSignIn} />
+  if (!authData) {
+    if (!signInView) {
+      return <Home onNavigate={setSignInView} />
+    }
+    return <SignIn onSignIn={handleSignIn} initialView={signInView} onBackToHome={() => setSignInView(null)} />
+  }
   if (!currentWorkspace) return <Dashboard user={user} token={token} onSelectWorkspace={setCurrentWorkspace} onSignOut={handleSignOut} />
 
   const statusColor = { checking: '#f0ad4e', online: '#28a745', offline: '#dc3545' }

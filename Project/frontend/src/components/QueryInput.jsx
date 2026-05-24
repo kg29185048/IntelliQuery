@@ -43,7 +43,7 @@ const QueryInput = ({ onQuery, loading, onClear }) => {
               <span className="spinner">⚙️</span> Processing...
             </>
           ) : (
-            '🚀 Submit Query'
+            'Submit Query'
           )}
         </button>
         <button
