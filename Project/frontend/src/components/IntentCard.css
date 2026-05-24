@@ -1,0 +1,320 @@
+.intent-card {
+  background: linear-gradient(#1e1f2e, #1e1f2e) padding-box,
+              linear-gradient(135deg, #fcebfa 0%, #cfa6cd 25%, #886286 50%, #cfa6cd 75%, #fcebfa 100%) border-box;
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  padding: 20px 24px;
+  max-width: 720px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(139, 92, 246, 0.1);
+  animation: intentSlideIn 0.3s ease;
+}
+
+@keyframes intentSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header ──────────────────────────────────────────── */
+.intent-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.intent-card__icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.intent-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 2px;
+}
+
+.intent-card__subtitle {
+  font-size: 12px;
+  color: #7c8db5;
+}
+
+/* ── Rows ────────────────────────────────────────────── */
+.intent-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.intent-row--col {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.intent-row--inline {
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.intent-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b92b3;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  min-width: 82px;
+}
+
+.intent-hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: #555e7c;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Inputs ──────────────────────────────────────────── */
+.intent-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: #e2e8f0;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color 0.2s;
+  flex: 1;
+}
+
+.intent-input:focus {
+  border-color: rgba(139, 92, 246, 0.6);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.intent-input::placeholder { color: #4a5168; }
+
+.intent-input--field { max-width: 140px; flex: none; }
+.intent-input--value { flex: 1; min-width: 80px; }
+.intent-input--limit { max-width: 80px; flex: none; }
+
+.intent-select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: #e2e8f0;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.intent-select:focus { border-color: rgba(139, 92, 246, 0.6); }
+.intent-select--op   { max-width: 90px; }
+
+.intent-textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-sm);
+  color: #e2e8f0;
+  font-size: 13px;
+  padding: 9px 12px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.intent-textarea:focus { border-color: rgba(139, 92, 246, 0.6); }
+.intent-textarea::placeholder { color: #4a5168; }
+
+/* ── Operation Tabs ──────────────────────────────────── */
+.intent-op-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.intent-op-tab {
+  padding: 5px 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #8b92b3;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.intent-op-tab:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #c4b5fd;
+}
+
+.intent-op-tab--active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: rgba(139, 92, 246, 0.6);
+  color: #c4b5fd;
+  font-weight: 600;
+}
+
+/* ── Sections (Filters, Stages) ──────────────────────── */
+.intent-section {
+  margin-bottom: 14px;
+  padding: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.intent-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b92b3;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.intent-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: nowrap;
+}
+
+.intent-remove-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  color: #f87171;
+  font-size: 12px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.intent-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.intent-empty-filters {
+  font-size: 12px;
+  color: #555e7c;
+  font-style: italic;
+  margin-bottom: 8px;
+}
+
+.intent-add-filter-btn {
+  background: transparent;
+  border: 1px dashed rgba(139, 92, 246, 0.3);
+  border-radius: 6px;
+  color: #8b5cf6;
+  font-size: 12px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.intent-add-filter-btn:hover {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* ── Aggregation Stage Chips ─────────────────────────── */
+.intent-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.intent-stage-chip {
+  padding: 5px 12px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: #8b92b3;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.intent-stage-chip:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  color: #c4b5fd;
+}
+
+.intent-stage-chip--active {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #c4b5fd;
+  font-weight: 600;
+}
+
+/* ── Sort + Limit ────────────────────────────────────── */
+.intent-field-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Action Buttons ──────────────────────────────────── */
+.intent-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.intent-btn {
+  padding: 9px 22px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.intent-btn--confirm {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35);
+}
+
+.intent-btn--confirm:hover {
+  background: var(--accent-dim);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.45);
+}
+
+.intent-btn--reset {
+  background: rgba(255, 255, 255, 0.05);
+  color: #8b92b3;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.intent-btn--reset:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}

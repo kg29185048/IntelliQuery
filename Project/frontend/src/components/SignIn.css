@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap');
+
 .signin-shell {
   min-height: 100vh;
   background: #080c14;
@@ -5,21 +7,47 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+<<<<<<< Updated upstream
   /* subtle neon grid */
   background-image:
     linear-gradient(rgba(168, 85, 247, 0.03) 1px, transparent 1px),
     linear-gradient(90deg, rgba(168, 85, 247, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
+=======
+  position: relative;
+  overflow: hidden;
+}
+
+.signin-aurora-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+>>>>>>> Stashed changes
 }
 
 .signin-card {
   width: 100%;
   max-width: 420px;
+<<<<<<< Updated upstream
   background: #0d1117;
   border: 1px solid #1e2640;
   border-radius: 16px;
   padding: 2.25rem 2rem 2rem;
   box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.08), 0 24px 64px rgba(0, 0, 0, 0.6);
+=======
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 2.25rem 2rem 2rem;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 1;
+>>>>>>> Stashed changes
 }
 
 .signin-header {
@@ -28,6 +56,7 @@
 }
 
 .signin-logo {
+<<<<<<< Updated upstream
   font-size: 1.6rem;
   font-weight: 800;
   background: linear-gradient(90deg, #a855f7, #22d3ee);
@@ -35,6 +64,13 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.02em;
+=======
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.05em;
+>>>>>>> Stashed changes
 }
 
 .signin-tagline {
@@ -44,6 +80,37 @@
   letter-spacing: 0.03em;
 }
 
+<<<<<<< Updated upstream
+=======
+.signin-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.signin-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-3);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.7rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.signin-tab:hover {
+  color: var(--text-2);
+}
+
+.signin-tab.active {
+  color: #B497CF;
+  border-bottom-color: #B497CF;
+}
+
+>>>>>>> Stashed changes
 .signin-form {
   display: flex;
   flex-direction: column;
@@ -80,8 +147,13 @@
 .signin-input::placeholder { color: #374151; }
 
 .signin-input:focus {
+<<<<<<< Updated upstream
   border-color: #a855f7;
   box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.18);
+=======
+  border-color: #B497CF;
+  box-shadow: 0 0 0 3px rgba(180, 151, 207, 0.25);
+>>>>>>> Stashed changes
 }
 
 .signin-input--error {
@@ -129,6 +201,7 @@
 }
 
 .signin-db-tab:hover {
+<<<<<<< Updated upstream
   border-color: #a855f7;
   color: #c084fc;
 }
@@ -137,6 +210,16 @@
   border-color: #a855f7;
   background: rgba(168, 85, 247, 0.12);
   color: #a855f7;
+=======
+  border-color: #B497CF;
+  color: #a5b4fc;
+}
+
+.signin-db-tab--active {
+  border-color: #B497CF;
+  background: rgba(180, 151, 207, 0.15);
+  color: #c7d2fe;
+>>>>>>> Stashed changes
 }
 
 .signin-global-error {
@@ -150,7 +233,11 @@
 
 .signin-btn {
   margin-top: 0.4rem;
+<<<<<<< Updated upstream
   background: linear-gradient(135deg, #7c3aed, #22d3ee);
+=======
+  background: #9886e0;
+>>>>>>> Stashed changes
   color: #fff;
   border: none;
   border-radius: 10px;
@@ -159,7 +246,11 @@
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
+<<<<<<< Updated upstream
   transition: opacity 0.18s, transform 0.12s, box-shadow 0.18s;
+=======
+  transition: opacity 0.18s, transform 0.12s;
+>>>>>>> Stashed changes
   display: flex;
   align-items: center;
   justify-content: center;
@@ -169,7 +260,10 @@
 .signin-btn:hover:not(:disabled) {
   opacity: 0.88;
   transform: translateY(-1px);
+<<<<<<< Updated upstream
   box-shadow: 0 6px 24px rgba(168, 85, 247, 0.45);
+=======
+>>>>>>> Stashed changes
 }
 
 .signin-btn:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -1,8 +1,17 @@
 .sidebar {
+<<<<<<< Updated upstream
   width: 260px;
   min-width: 260px;
   background: #060a12;
   color: #e2e8f0;
+=======
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  background: linear-gradient(180deg, rgba(30, 30, 40, 0.95) 0%, rgba(17, 17, 24, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: var(--text-1);
+>>>>>>> Stashed changes
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -11,6 +20,11 @@
   z-index: 100;
   transition: transform 0.28s cubic-bezier(.4,0,.2,1);
   overflow: hidden;
+<<<<<<< Updated upstream
+=======
+  border-right: 1px solid rgba(180, 151, 207, 0.15);
+  box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+>>>>>>> Stashed changes
 }
 .sidebar--closed { transform: translateX(-260px); }
 .sidebar--open   { transform: translateX(0); }
@@ -19,16 +33,45 @@
   padding: 1rem 0.75rem 0.75rem;
   border-bottom: 1px solid #0f1729;
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
 .sidebar-logo {
   font-size: 1rem;
   font-weight: 700;
+<<<<<<< Updated upstream
   color: #fff;
   letter-spacing: -0.01em;
+=======
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+  display: flex;
+  flex-direction: column;
+>>>>>>> Stashed changes
 }
 .sidebar-logo small { color: #4b5563; font-size: 0.72rem; font-weight: 400; display: block; margin-top: 1px; }
+
+.sidebar-close-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.sidebar-close-btn:hover {
+  background: var(--surface-3);
+  color: var(--text-1);
+  border-color: var(--border);
+}
 
 .btn-new-chat {
   margin: 0.75rem;
@@ -45,7 +88,15 @@
   transition: background 0.15s, border-color 0.15s;
   flex-shrink: 0;
 }
+<<<<<<< Updated upstream
 .btn-new-chat:hover { background: #1e2640; border-color: #a855f7; }
+=======
+.btn-new-chat:hover { 
+  background: var(--surface-3); 
+  border-color: var(--accent); 
+  color: var(--text-1);
+}
+>>>>>>> Stashed changes
 
 .sidebar-section-label {
   padding: 0.6rem 0.9rem 0.3rem;
@@ -93,8 +144,16 @@
   text-align: left;
   transition: background 0.15s;
 }
+<<<<<<< Updated upstream
 .collection-toggle:hover { background: #0d1117; color: #e2e8f0; }
 .field-count { color: #475569; font-size: 0.72rem; white-space: nowrap; }
+=======
+.collection-toggle:hover { 
+  background: rgba(180, 151, 207, 0.08); 
+  color: var(--text-1); 
+}
+.field-count { color: var(--text-3); font-size: 0.7rem; white-space: nowrap; }
+>>>>>>> Stashed changes
 
 .fields-list {
   padding: 0.25rem 0 0.5rem 1.6rem;

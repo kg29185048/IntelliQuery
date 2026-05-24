@@ -1,4 +1,54 @@
+<<<<<<< Updated upstream
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+=======
+/* ─────────────────────────────────────────────
+   Design tokens
+───────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap');
+
+:root {
+  --bg: #0b0b10;
+  --surface: #111118;
+  --surface-2: #17171f;
+  --surface-3: #1e1e28;
+  --border: #26263a;
+  --border-soft: #1c1c28;
+
+  --accent: #B497CF;
+  /* lavender */
+  --accent-dim: #9886e0;
+  /* purple */
+  --accent-glow: rgba(180, 151, 207, 0.18);
+  --cyan: #d9a5c2;
+  /* light pink */
+
+  --text-1: #ffffff;
+  --text-2: #c8c8d8;
+  --text-3: #7878a0;
+
+  --red: #f87171;
+  --green: #4ade80;
+  --amber: #fbbf24;
+
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  
+  --glass-blur: 16px;
+  --glow-shadow: 0 8px 24px rgba(180, 151, 207, 0.12);
+
+  --navbar-h: 56px;
+  --sidebar-w: 264px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+>>>>>>> Stashed changes
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -8,39 +58,91 @@ body {
   color: #e2e8f0;
 }
 
-#root { height: 100vh; }
+#root {
+  height: 100vh;
+}
 
+<<<<<<< Updated upstream
 .app-shell { display: flex; height: 100vh; overflow: hidden; }
 
+=======
+.app-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Removed left-edge-toggle */
+
+
+/* ── Main area ── */
+>>>>>>> Stashed changes
 .main-area {
   flex: 1;
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
+<<<<<<< Updated upstream
   transition: margin-left 0.28s cubic-bezier(.4,0,.2,1);
   background: #080c14;
 }
 .main-area.sidebar-open  { margin-left: 260px; }
 .main-area.sidebar-closed { margin-left: 0; }
+=======
+  transition: margin-left 0.3s cubic-bezier(.4, 0, .2, 1);
+  background: var(--bg);
+  min-width: 0;
+}
+
+.main-area.sidebar-open {
+  margin-left: var(--sidebar-w);
+}
+
+.main-area.sidebar-closed {
+  margin-left: 0;
+}
+>>>>>>> Stashed changes
 
 .top-navbar {
   display: flex;
   align-items: center;
+<<<<<<< Updated upstream
   gap: 0.75rem;
   padding: 0.6rem 1rem;
   background: #0d1117;
   border-bottom: 1px solid #1e2640;
+=======
+  gap: 0.6rem;
+  padding: 0 1.5rem;
+  background: 
+    radial-gradient(circle at 0% 0%, rgba(168, 85, 247, 0.08), transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.08), transparent 50%),
+    rgba(17, 17, 24, 0.65);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+>>>>>>> Stashed changes
   flex-shrink: 0;
   height: 52px;
   z-index: 10;
   box-shadow: 0 1px 8px rgba(0, 0, 0, 0.5);
 }
+<<<<<<< Updated upstream
 .sidebar-toggle {
   background: transparent;
   border: 1px solid transparent;
   color: #94a3b8;
   font-size: 1.1rem;
+=======
+
+.navbar-hamburger {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-2);
+>>>>>>> Stashed changes
   width: 34px;
   height: 34px;
   border-radius: 6px;
@@ -49,6 +151,7 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+<<<<<<< Updated upstream
   transition: background 0.15s;
 }
 .sidebar-toggle:hover { background: #1e2640; }
@@ -70,14 +173,100 @@ body {
   font-weight: 500;
 }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+=======
+  transition: all 0.15s;
+}
 
-.signout-btn {
+.navbar-hamburger:hover {
+  background: var(--surface-3);
+  color: var(--text-1);
+  border-color: var(--border);
+}
+
+.navbar-brand {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.navbar-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border);
+}
+
+/* IntelliQuery — Space Grotesk 700 */
+.navbar-title {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  white-space: nowrap;
+}
+
+.navbar-subtitle {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-2);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-db-type {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-2);
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  white-space: nowrap;
+}
+>>>>>>> Stashed changes
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   background: transparent;
   border: 1px solid #1e2640;
   border-radius: 8px;
+<<<<<<< Updated upstream
   padding: 4px 10px;
   color: #94a3b8;
   font-size: 0.75rem;
@@ -89,6 +278,39 @@ body {
 .signout-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .signout-arrow { font-size: 0.85rem; }
 
+=======
+  padding: 6px 12px;
+  color: var(--text-2);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.nav-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-1);
+}
+
+.nav-btn--danger:hover {
+  background: rgba(248, 113, 113, 0.08);
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.mcp-nav-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+/* ── Chat area — centered content column ── */
+>>>>>>> Stashed changes
 .chat-area {
   flex: 1;
   overflow-y: auto;
@@ -98,6 +320,7 @@ body {
   align-items: center;
   background: #080c14;
 }
+<<<<<<< Updated upstream
 .chat-area > * { width: 100%; max-width: 780px; }
 
 .offline-banner {
@@ -107,11 +330,33 @@ body {
   color: #fbbf24;
   border: 1px solid #92400e;
   border-radius: 8px;
+=======
+
+.chat-area>* {
+  width: 100%;
+  max-width: 760px;
+}
+
+.offline-banner {
+  background: rgba(251, 191, 36, 0.05);
+  color: var(--amber);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: var(--radius);
+>>>>>>> Stashed changes
   padding: 0.65rem 1rem;
   margin-bottom: 1.25rem;
   font-size: 0.875rem;
 }
+<<<<<<< Updated upstream
 .offline-banner code { background: rgba(255,255,255,0.08); padding: 1px 6px; border-radius: 4px; }
+=======
+
+.offline-banner code {
+  background: rgba(255, 255, 255, 0.07);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+>>>>>>> Stashed changes
 
 .empty-state {
   display: flex;
@@ -120,6 +365,7 @@ body {
   justify-content: center;
   text-align: center;
   flex: 1;
+<<<<<<< Updated upstream
   min-height: 60vh;
   gap: 0.75rem;
 }
@@ -127,6 +373,49 @@ body {
 .empty-state h3 { font-size: 1.4rem; color: #e2e8f0; font-weight: 700; }
 .empty-state p { font-size: 0.9rem; color: #64748b; max-width: 460px; line-height: 1.5; }
 .example-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; margin-top: 0.5rem; }
+=======
+  min-height: 55vh;
+  gap: 1rem;
+  background: 
+    linear-gradient(110deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 25%, rgba(255,255,255,0) 100%),
+    radial-gradient(circle at 0% 0%, rgba(168, 85, 247, 0.18), transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.18), transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(163, 103, 133, 0.12), transparent 60%),
+    rgba(5, 5, 5, 0.7);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-lg);
+  box-shadow: 
+    var(--glow-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+.empty-state h3 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--text-1);
+  letter-spacing: -0.03em;
+}
+
+.empty-state p {
+  font-size: 0.9rem;
+  color: var(--text-2);
+  max-width: 420px;
+  line-height: 1.65;
+}
+
+.example-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+>>>>>>> Stashed changes
 .chip {
   padding: 0.45rem 0.9rem;
   border-radius: 999px;
@@ -138,7 +427,16 @@ body {
   transition: background 0.18s, color 0.18s, border-color 0.18s;
   font-weight: 500;
 }
+<<<<<<< Updated upstream
 .chip:hover { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+=======
+
+.chip:hover {
+  background: var(--accent-glow);
+  color: #c7d2fe;
+  border-color: var(--accent);
+}
+>>>>>>> Stashed changes
 
 .typing-indicator {
   display: flex;
@@ -150,13 +448,28 @@ body {
   width: 100%;
   max-width: 780px;
 }
+<<<<<<< Updated upstream
 .typing-bubble { display: flex; gap: 4px; align-items: center; }
 .typing-bubble span {
   width: 7px; height: 7px;
   background: #a855f7;
+=======
+
+.typing-bubble {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.typing-bubble span {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+>>>>>>> Stashed changes
   border-radius: 50%;
   animation: typingBounce 1.3s ease-in-out infinite;
 }
+<<<<<<< Updated upstream
 .typing-bubble span:nth-child(2) { animation-delay: 0.18s; }
 .typing-bubble span:nth-child(3) { animation-delay: 0.36s; }
 @keyframes typingBounce {
@@ -171,4 +484,94 @@ body {
 @media (max-width: 768px) {
   .main-area.sidebar-open { margin-left: 0; }
   .chat-area { padding: 1rem 0.75rem; }
+=======
+
+.typing-bubble span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-bubble span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+.chat-area::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-area::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.mobile-backdrop {
+  display: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .main-area.sidebar-open {
+    margin-left: 0;
+  }
+
+  .status-badge {
+    display: none;
+  }
+
+  .navbar-subtitle {
+    display: none;
+  }
+
+  .navbar-divider {
+    display: none;
+  }
+
+  .mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 150;
+  }
+}
+
+@media (max-width: 600px) {
+  .top-navbar {
+    padding: 0 0.85rem;
+  }
+
+  .navbar-title {
+    font-size: 1.1rem;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .hide-text-mobile {
+    display: none !important;
+  }
+
+  .chat-area {
+    padding: 1.25rem 0.85rem 1rem;
+  }
+>>>>>>> Stashed changes
 }

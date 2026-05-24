@@ -12,6 +12,7 @@
   display: flex;
   gap: 0.6rem;
   align-items: flex-end;
+<<<<<<< Updated upstream
   background: #0d1117;
   border: 1.5px solid #1e2640;
   border-radius: 16px;
@@ -25,6 +26,28 @@
   border-color: #a855f7;
   box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
   background: #0d1117;
+=======
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  padding: 0.5rem 0.55rem 0.5rem 1rem;
+  width: 100%;
+  max-width: 760px;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.05), 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+.chat-input-inner:focus-within {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 
+    inset 0 1px 1px rgba(255, 255, 255, 0.05),
+    var(--glow-shadow),
+    0 0 0 1px var(--accent);
+  transform: translateY(-2px);
+>>>>>>> Stashed changes
 }
 
 .chat-textarea {
@@ -46,10 +69,16 @@
   background: linear-gradient(135deg, #7c3aed, #22d3ee);
   color: white;
   border: none;
+<<<<<<< Updated upstream
   border-radius: 10px;
   width: 34px;
   height: 34px;
   font-size: 1rem;
+=======
+  border-radius: var(--radius-md);
+  width: 32px;
+  height: 32px;
+>>>>>>> Stashed changes
   cursor: pointer;
   flex-shrink: 0;
   display: flex;
