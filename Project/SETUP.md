@@ -1,6 +1,6 @@
 # IntelliQuery - Full Stack Setup Guide
 
-Complete step-by-step guide to set up and run the IntelliQuery application with React frontend and FastAPI backend.
+Complete step-by-step guide to set up and run the IntelliQuery application with React frontend, FastAPI backend, and multi-database support (MongoDB & SQL).
 
 ## Project Structure
 
@@ -61,9 +61,21 @@ pip install -r requirements.txt
 Create a `.env` file in the project root:
 
 ```env
-MONGODB_URI=mongodb://localhost:27017
-DATABASE_NAME=intelliquery
+# AI Model Configuration
 GROQ_API_KEY=your_groq_api_key_here
+
+# Main Application Database (Workspaces, Users, History)
+MONGO_URI=mongodb://localhost:27017/intelliquery
+
+# Authentication & Encryption
+JWT_SECRET=your_super_secret_jwt_key
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
+
+# Email configuration (Optional, for notifications)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
 ```
 
 ### 3. Start the FastAPI Backend
@@ -125,10 +137,12 @@ The frontend will be available at **http://localhost:5173**
 - 📱 Fully responsive design
 
 ### Backend Features
-- 🧠 Advanced NLP using LangChain
-- 🔄 Multi-agent orchestration with LangGraph
-- 🗄️ MongoDB integration
-- 🛡️ CORS-enabled API
+- 🧠 Advanced NLP using LangChain & LangGraph
+- 🔄 Multi-agent orchestration (Intent, SQL, Visualizations)
+- 🗄️ Multi-Database integration (MongoDB & SQL)
+- 🔒 Authentication & Google OAuth
+- 🏢 Multi-tenant Workspaces with role-based access
+- 🛡️ CORS-enabled API & MCP Server for Claude Desktop
 - 📝 Interactive API documentation
 - ✅ Error handling and validation
 
@@ -216,8 +230,10 @@ Create `Dockerfile` and `docker-compose.yml` for containerized deployment.
 
 ### Environment Variables
 Make sure to set these for production:
-- `MONGODB_URI` - Production MongoDB connection
+- `MONGO_URI` - Production MongoDB connection
 - `GROQ_API_KEY` - Your Groq API key
+- `JWT_SECRET` - Strong secret key for JWT tokens
+- `GOOGLE_CLIENT_ID` - Client ID for Google OAuth
 - `ENVIRONMENT` - Set to "production"
 
 ## Support & Documentation
