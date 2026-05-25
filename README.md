@@ -1,117 +1,94 @@
 # IntelliQuery
 
-# 🚀 Natural Language → MongoDB Query System
+🚀 **Live Demo:** [https://intelliquery-five.vercel.app/](https://intelliquery-five.vercel.app/)
 
-A multi-agent AI system that allows users to query MongoDB databases using plain English. The application translates natural language into executable MongoDB queries, validates them, executes them, explains the results, and optionally visualizes the output.
+**IntelliQuery** is a powerful, full-stack application designed to translate natural language into structured MongoDB queries using advanced AI agents. By bridging the gap between human language and database syntax, IntelliQuery empowers users to easily explore, query, and understand their data without needing to write complex database commands.
 
----
+## Overview
 
-## 📌 Overview
+IntelliQuery leverages a modern technology stack to deliver a seamless and intelligent data querying experience:
+- **Backend:** A robust API built with FastAPI, integrating LangChain and LangGraph for advanced multi-agent orchestration. It supports multiple database engines including **MongoDB** and **SQL** databases.
+- **Frontend:** A dynamic, responsive React interface powered by Vite and Bootstrap, ensuring a fast and intuitive user experience.
+- **AI Core:** Employs advanced NLP models (via Groq API) across specialized agents (Router, Intent Extraction, SQL, Visualization, etc.) to accurately interpret user intent, validate safety, and generate precise database operations along with human-readable explanations.
+- **Security & Multi-Tenancy:** Features robust authentication and a workspace model with member permission controls, making it enterprise-ready.
 
-Non-technical users often struggle with database querying due to the need for syntax knowledge. Even developers spend time writing repetitive queries.
+## Features
 
-This project solves that by enabling:
-
-- 🧠 Natural language querying  
-- ⚙️ Automated query generation  
-- 🔒 Built-in query validation  
-- 📊 Smart visualization suggestions  
-- 💬 Human-readable explanations  
-
----
-
-
-### 🔁 Flow Summary
-
-1. User enters query in Streamlit UI  
-2. `router_agent` orchestrates the pipeline  
-3. `schema_agent` extracts database structure  
-4. `query_agent` converts NL → MongoDB query  
-5. `validation_agent` ensures safety  
-6. Query is executed on MongoDB  
-7. `explanation_agent` explains results  
-8. `visualization_agent` generates charts (optional)  
-9. Results displayed in UI  
-
+- **Natural Language to Query (Mongo & SQL):** Simply type what you want to know, and the system generates the precise query, automatically routing to the correct SQL or NoSQL database.
+- **Interactive Intent Confirmation:** Smartly extracts query intents and allows users to confirm them before execution.
+- **Query Explanation & Suggestions:** Transparent insights into how the generated query works and intelligent follow-up suggestions.
+- **Smart Results & Visualization:** View database results in tabular or list formats, and automatically generate optimal chart configurations for data visualization.
+- **Multi-Tenant Workspaces:** Securely manage access via workspaces, encrypting database URIs and enforcing member-specific permissions.
+- **Claude Desktop Integration:** Includes an MCP server for seamless integration with Claude Desktop.
+- **Modern & Responsive UI:** A premium interface with query history tracking that works beautifully across all devices.
 
 ---
 
-## 🤖 Multi-Agent System
+## Local Initialization
 
-### 🔹 `router_agent`
-- Central orchestrator
-- Controls flow between all agents
+Follow these steps to get the project running on your local machine.
 
-### 🔹 `schema_agent`
-- Extracts MongoDB schema dynamically
-- Provides collection + field metadata
+### Prerequisites
+- **Python 3.8+**
+- **Node.js 16+**
+- **MongoDB** (Running locally on default port `27017` or configured via URI)
 
-### 🔹 `query_agent`
-- Converts natural language → structured JSON query
-- Uses **Groq LLM (Llama 3.1 8B Instant)**
+### 1. Environment Configuration
 
-### 🔹 `validation_agent`
-- Ensures query safety
-- Blocks dangerous operations:
-  - `delete`
-  - `drop`
-  - `remove`
-  - `$out`
-  - `$merge`
+Create a `.env` file in the root directory and configure the following variables:
+```env
+# AI Model Configuration
+GROQ_API_KEY=your_groq_api_key_here
 
-### 🔹 `execution_agent`
-- Executes query on MongoDB
-- Mostly handled inline within router
+# Main Application Database (Workspaces, Users, History)
+MONGO_URI=mongodb://localhost:27017/intelliquery
 
-### 🔹 `explanation_agent`
-- Converts query → plain English explanation
-- Improves interpretability
+# Authentication & Encryption
+JWT_SECRET=your_super_secret_jwt_key
+GOOGLE_CLIENT_ID=your_google_oauth_client_id
 
-### 🔹 `visualization_agent`
-- Suggests best chart type using LLM
-- Supports:
-  - Bar charts
-  - Line charts
-  - Scatter plots
-
----
-
-## ⚡ Supported Operations
-
-- `find` → Retrieve documents  
-- `insert` → Add new data  
-- `update` → Modify existing data  
-- `aggregate` → Perform analytics (grouping, counting, etc.)
-
----
-
-## 🔄 Example Workflow
-
-**User Input:**
-Show me all users with gmail emails
-
-**Generated Query:**
-```json
-{
-  "operation": "find",
-  "collection": "users",
-  "filter": {
-    "email": { "$regex": "gmail" }
-  }
-}
+# Email configuration (Optional, for notifications)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
 ```
 
-**Explanation:**
-This query finds all users whose email contains 'gmail'
+### 2. Backend Setup
 
-## 🧰 Tech Stack
+Open a terminal in the root directory and install the required Python dependencies:
 
-| Component | Technology |
-|----------|-----------|
-| LLM | Groq API (Llama 3.1 8B Instant) |
-| Backend | Python |
-| Database | MongoDB Atlas (`sample_mflix`) |
-| DB Driver | `pymongo` |
-| LLM Framework | `langchain_groq` |
-| UI | Streamlit |
-| Config | `.env` (API keys & URI) |
+```bash
+pip install -r requirements.txt
+```
+
+Start the FastAPI backend server:
+
+```bash
+uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+```
+*The API will be available at `http://localhost:8000` (Swagger UI at `http://localhost:8000/docs`).*
+
+### 3. Frontend Setup
+
+Open a new terminal and navigate to the frontend directory:
+
+```bash
+cd frontend
+```
+
+Install the Node.js dependencies and start the development server:
+
+```bash
+npm install
+npm run dev
+```
+*The frontend will be available at `http://localhost:5173`.*
+
+---
+
+## Further Documentation
+
+- For a detailed, comprehensive setup guide, please refer to [SETUP.md](./SETUP.md).
+- For API endpoints and backend specifics, see [API.md](./API.md).
+- For frontend details, visit the [Frontend README](./frontend/README.md).
