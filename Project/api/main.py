@@ -31,11 +31,15 @@ from agents.router_agent import run_pipeline, extract_intent_pipeline
 from agents.sql_agent import run_sql_pipeline
 from agents.schema_agent import get_schema
 from agents.visualization_agent import generate_visualization_config
+from mcp_server import mcp
 
 app = FastAPI(title="IntelliQuery API", version="1.0.0")
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(workspaces_router, prefix="/workspaces", tags=["Workspaces"])
+
+# Mount FastMCP SSE Transport for remote deployment
+app.mount("/mcp", mcp.sse_app())
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

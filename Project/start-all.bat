@@ -29,7 +29,7 @@ echo.
 
 REM Start Backend
 echo Starting FastAPI Backend on http://localhost:8000...
-start cmd /k ".\.venv\Scripts\python.exe api/main.py"
+start cmd /k ".\venv\Scripts\python.exe api/main.py"
 
 REM Wait a bit for backend to start
 timeout /t 3 /nobreak
