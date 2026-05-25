@@ -22,6 +22,15 @@ IntelliQuery leverages a modern technology stack to deliver a seamless and intel
 - **Claude Desktop Integration:** Includes an MCP server for seamless integration with Claude Desktop.
 - **Modern & Responsive UI:** A premium interface with query history tracking that works beautifully across all devices.
 
+## Tech Stack
+
+- **Frontend:** React, Vite, Bootstrap, CSS Modules
+- **Backend:** Python, FastAPI, Pydantic
+- **AI & Orchestration:** LangChain, LangGraph, Groq API
+- **Databases:** MongoDB, SQL (via SQLAlchemy engines)
+- **Security & Auth:** JWT, Google OAuth, Bcrypt, Cryptography (Fernet)
+- **Integration:** Model Context Protocol (MCP)
+
 ---
 
 ## Local Initialization
