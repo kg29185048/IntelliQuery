@@ -33,22 +33,25 @@ from agents.sql_agent import run_sql_pipeline
 from api.utils.encryption import decrypt_uri
 from bson import ObjectId
 
+import contextvars
+
 # ──────────────────────────────────────────────────────────────
-# Thread-local storage for authenticated user context.
+# ContextVar for authenticated user context.
 # The auth middleware in api/main.py sets this before each
 # MCP tool invocation so tools know WHO is calling.
+# ContextVar correctly propagates to worker threads via AnyIO.
 # ──────────────────────────────────────────────────────────────
-_user_context = threading.local()
+_user_context: contextvars.ContextVar[dict | None] = contextvars.ContextVar("mcp_user", default=None)
 
 
 def set_current_mcp_user(user: dict | None):
     """Called by the auth middleware to inject the authenticated user."""
-    _user_context.user = user
+    _user_context.set(user)
 
 
 def get_current_mcp_user() -> dict | None:
     """Retrieve the authenticated user inside MCP tools."""
-    return getattr(_user_context, "user", None)
+    return _user_context.get()
 
 
 # ──────────────────────────────────────────────────────────────
