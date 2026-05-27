@@ -386,6 +386,7 @@ function App() {
       {/* MCP Connect Modal */}
       {mcpModalOpen && (
         <McpModal
+          token={token}
           onClose={() => setMcpModalOpen(false)}
         />
       )}

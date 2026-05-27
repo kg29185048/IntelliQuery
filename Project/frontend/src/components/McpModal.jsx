@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './McpModal.css'
 
-const McpModal = ({ onClose }) => {
+const McpModal = ({ token, onClose }) => {
   const [status, setStatus] = useState('idle') // idle | loading_token | token_ready | installing | success | error
   const [error, setError] = useState('')
   const [mcpToken, setMcpToken] = useState('')
@@ -11,7 +11,6 @@ const McpModal = ({ onClose }) => {
     setStatus('loading_token')
     setError('')
     try {
-      const token = localStorage.getItem('token')
       if (!token) throw new Error('Please log in first.')
 
       const res = await fetch('/api/mcp-token', {
@@ -52,7 +51,6 @@ const McpModal = ({ onClose }) => {
     setStatus('installing')
     setError('')
     try {
-      const token = localStorage.getItem('token')
       const res = await fetch('/api/install-mcp', {
         method: 'POST',
         headers: {
