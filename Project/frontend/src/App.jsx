@@ -386,7 +386,6 @@ function App() {
       {/* MCP Connect Modal */}
       {mcpModalOpen && (
         <McpModal
-          defaultMongoUri={""}
           onClose={() => setMcpModalOpen(false)}
         />
       )}

@@ -15,7 +15,7 @@
   border-radius: 12px;
   padding: 1.5rem;
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
   display: flex;
   flex-direction: column;
@@ -48,44 +48,42 @@
 
 .mcp-modal-desc {
   font-size: 0.8rem;
-  color: #64748b;
+  color: #94a3b8;
   line-height: 1.5;
 }
 
-.mcp-already-connected {
-  font-size: 0.78rem;
-  color: #4ade80;
-  background: #052e16;
-  border: 1px solid #166534;
-  border-radius: 6px;
-  padding: 0.45rem 0.75rem;
-}
-
-.mcp-field {
+/* Step indicator */
+.mcp-step {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.mcp-field label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #94a3b8;
-}
-
-.mcp-field input {
-  background: #080c14;
-  border: 1px solid #1e2640;
-  border-radius: 8px;
-  padding: 0.55rem 0.75rem;
-  color: #e2e8f0;
+  align-items: center;
+  gap: 0.6rem;
   font-size: 0.85rem;
-  font-family: inherit;
-  outline: none;
-  transition: border-color 0.15s;
+  color: #e2e8f0;
 }
-.mcp-field input:focus { border-color: #a855f7; }
-.mcp-field input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mcp-step-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Action buttons row */
+.mcp-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.mcp-actions .mcp-connect-btn {
+  flex: 1;
+}
 
 .mcp-error {
   font-size: 0.78rem;
@@ -102,15 +100,46 @@
   border-radius: 8px;
   padding: 0.6rem 1rem;
   color: #fff;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.1s;
 }
 .mcp-connect-btn:hover:not(:disabled) { opacity: 0.88; }
+.mcp-connect-btn:active:not(:disabled) { transform: scale(0.98); }
 .mcp-connect-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.mcp-copy-btn {
+  background: transparent;
+  border: 1px solid #1e2640;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+  flex: 1;
+}
+.mcp-copy-btn:hover { border-color: var(--accent); color: #e2e8f0; }
+
+.mcp-hint {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.5;
+}
+
+.mcp-hint code {
+  background: #1e2640;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+/* Success state */
 .mcp-success {
   display: flex;
   flex-direction: column;
@@ -131,4 +160,33 @@
 .mcp-restart-note {
   font-size: 0.78rem;
   color: #64748b;
+}
+
+.mcp-tools-info {
+  text-align: left;
+  background: #080c14;
+  border: 1px solid #1e2640;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  width: 100%;
+}
+
+.mcp-tools-info p {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-bottom: 0.4rem;
+}
+
+.mcp-tools-info ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.mcp-tools-info li {
+  font-size: 0.78rem;
+  color: #e2e8f0;
 }
