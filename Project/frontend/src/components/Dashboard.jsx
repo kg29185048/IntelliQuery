@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import './Dashboard.css'
 
 const DB_TYPES = [
@@ -24,6 +25,8 @@ const Dashboard = ({ user, token, onSelectWorkspace, onSignOut }) => {
   const [showCreate, setShowCreate] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
+  const profileBtnRef = useRef(null)
 
   // Create Form State
   const [createForm, setCreateForm] = useState({
@@ -117,21 +120,51 @@ const Dashboard = ({ user, token, onSelectWorkspace, onSignOut }) => {
             <button className="btn-outline" onClick={() => setShowJoin(true)}>Join Workspace</button>
             <button className="btn-outline" onClick={() => setShowCreate(true)}>Create Workspace</button>
             <div className="profile-menu-container">
-              <button className="profile-btn" onClick={() => setProfileOpen(!profileOpen)}>
+              <button
+                ref={profileBtnRef}
+                className="profile-btn"
+                onClick={() => {
+                  if (!profileOpen && profileBtnRef.current) {
+                    const rect = profileBtnRef.current.getBoundingClientRect()
+                    setDropdownPos({
+                      top: rect.bottom + 8,
+                      right: window.innerWidth - rect.right
+                    })
+                  }
+                  setProfileOpen(prev => !prev)
+                }}
+              >
                 {user?.email?.charAt(0).toUpperCase() || 'U'}
               </button>
-              {profileOpen && (
+              {profileOpen && createPortal(
                 <>
-                  <div className="profile-backdrop" onClick={() => setProfileOpen(false)} />
-                  <div className="profile-dropdown">
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 9998 }}
+                    onClick={() => setProfileOpen(false)}
+                  />
+                  <div
+                    className="profile-dropdown"
+                    style={{
+                      position: 'fixed',
+                      top: dropdownPos.top,
+                      right: dropdownPos.right,
+                      zIndex: 9999
+                    }}
+                  >
                     <div className="profile-header">
                       <strong>{user?.email}</strong>
                     </div>
                     <button className="profile-dropdown-item" onClick={onSignOut}>
-                      Sign Out
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                      </svg>
+                      Logout
                     </button>
                   </div>
-                </>
+                </>,
+                document.body
               )}
             </div>
           </div>
