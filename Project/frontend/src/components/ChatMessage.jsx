@@ -93,7 +93,7 @@ const ChatMessage = ({ message, onSuggest, onConfirm, onCancel, onIntentConfirm,
             <div className="msg-confirm-actions">
               <button
                 className="msg-confirm-btn msg-confirm-btn--confirm"
-                onClick={() => onConfirm && onConfirm(userQuery)}
+                onClick={() => onConfirm && onConfirm(userQuery, data?.confirmed_intent)}
               >
                 Confirm Update
               </button>

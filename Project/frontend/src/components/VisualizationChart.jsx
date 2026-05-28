@@ -61,7 +61,7 @@ const VisualizationChart = ({ userQuery, resultData }) => {
     if (!cols.includes(x_axis) || !cols.includes(y_axis)) {
       return (
         <div className="viz-error">
-          ⚠️ Chart config references columns [{x_axis}, {y_axis}] not found in data.<br/>
+          ⚠️ Chart config references columns [{x_axis}, {y_axis}] not found in data.<br />
           <small>Available columns: [{cols.join(', ')}]</small>
         </div>
       )

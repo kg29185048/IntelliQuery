@@ -192,7 +192,7 @@ function App() {
         setMessages(prev => [...prev, {
           role: 'confirm',
           content: data.explanation,
-          data: { query: data.query },
+          data: { query: data.query, confirmed_intent: confirmedIntent },
           userQuery: originalQuery,
         }])
         return
@@ -229,7 +229,7 @@ function App() {
     })
   }
 
-  const handleConfirmUpdate = async (originalQuery) => {
+  const handleConfirmUpdate = async (originalQuery, confirmedIntent) => {
     // Mark the confirm bubble as resolved so buttons are disabled
     setMessages(prev => prev.map(m =>
       m.role === 'confirm' && m.userQuery === originalQuery
@@ -241,7 +241,12 @@ function App() {
       const response = await fetch('/api/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...buildHeaders() },
-        body: JSON.stringify({ query: originalQuery, history: llmHistory, confirmed: true })
+        body: JSON.stringify({ 
+          query: originalQuery, 
+          history: llmHistory, 
+          confirmed: true,
+          confirmed_intent: confirmedIntent 
+        })
       })
       let data
       const text = await response.text()
