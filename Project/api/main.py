@@ -31,54 +31,15 @@ from agents.router_agent import run_pipeline, extract_intent_pipeline
 from agents.sql_agent import run_sql_pipeline
 from agents.schema_agent import get_schema
 from agents.visualization_agent import generate_visualization_config
-from mcp_server import mcp, set_current_mcp_user
-from api.utils.jwt_handler import verify_token, create_access_token
+from mcp_server import mcp
 
 app = FastAPI(title="IntelliQuery API", version="1.0.0")
 
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(workspaces_router, prefix="/workspaces", tags=["Workspaces"])
 
-# ── JWT Auth Middleware for MCP SSE endpoint ──
-# Wraps the MCP SSE Starlette app with auth so that every MCP tool
-# invocation knows which user is calling.
-from starlette.types import ASGIApp, Scope, Receive, Send
-
-class McpAuthMiddleware:
-    """ASGI middleware that validates JWT from the Authorization header
-    and injects the authenticated user into mcp_server's thread-local context."""
-
-    def __init__(self, app: ASGIApp):
-        self.app = app
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send):
-        if scope["type"] in ("http", "websocket"):
-            # Extract Authorization header
-            headers = dict(scope.get("headers", []))
-            auth_header = headers.get(b"authorization", b"").decode("utf-8")
-
-            user = None
-            if auth_header.startswith("Bearer "):
-                token = auth_header[7:]
-                try:
-                    payload = verify_token(token)
-                    user_id = payload.get("user_id")
-                    if user_id:
-                        app_db = get_db()
-                        user_doc = app_db["users"].find_one({"_id": ObjectId(user_id)})
-                        if user_doc:
-                            user_doc["id"] = str(user_doc["_id"])
-                            user = user_doc
-                except Exception:
-                    pass  # Invalid token — user stays None, tools return auth error
-
-            set_current_mcp_user(user)
-
-        await self.app(scope, receive, send)
-
-# Mount FastMCP SSE Transport with JWT auth middleware
-_mcp_sse = mcp.sse_app()
-app.mount("/mcp", McpAuthMiddleware(_mcp_sse))
+# Mount FastMCP SSE Transport for remote deployment
+app.mount("/mcp", mcp.sse_app())
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -308,40 +269,13 @@ async def extract_intent_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# ── MCP Token Generation ──
-# Long-lived tokens for MCP (30 days) so users don't have to
-# refresh constantly. Regular web JWT expires in 60 min.
-import jwt as pyjwt
-from datetime import datetime, timedelta
-
-MCP_TOKEN_EXPIRE_DAYS = 30
-
-
-@app.post("/mcp-token")
-async def generate_mcp_token(current_user: dict = Depends(get_current_user)):
-    """Generate a long-lived JWT token specifically for MCP / Claude Desktop use."""
-    from api.utils.jwt_handler import SECRET_KEY, ALGORITHM
-    payload = {
-        "user_id": current_user["id"],
-        "purpose": "mcp",
-        "exp": datetime.utcnow() + timedelta(days=MCP_TOKEN_EXPIRE_DAYS),
-    }
-    token = pyjwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return {
-        "token": token,
-        "expires_in_days": MCP_TOKEN_EXPIRE_DAYS,
-        "usage": "Add this token to your Claude Desktop MCP config as an Authorization header.",
-    }
-
-
 class McpInstallRequest(BaseModel):
-    mcp_token: str
+    mongo_uri: str
 
 
 @app.post("/install-mcp")
-async def install_mcp(request: Request, body: McpInstallRequest):
-    """Write the IntelliQuery remote MCP server entry into the Claude Desktop config file.
-    Uses a URL-based config with JWT auth header instead of a local command."""
+async def install_mcp(request: McpInstallRequest):
+    """Write the IntelliQuery MCP server entry into the Claude Desktop config file."""
     try:
         system = platform.system()
         if system == "Windows":
@@ -354,12 +288,31 @@ async def install_mcp(request: Request, body: McpInstallRequest):
         else:
             raise HTTPException(status_code=400, detail="Unsupported OS. Claude Desktop supports Windows and macOS only.")
 
-        # Build remote MCP config — URL-based with auth header
-        server_base = "https://intelliquery.onrender.com"
+        # Locate the venv Python relative to this api/ file's parent (project root)
+        project_dir = Path(os.path.dirname(__file__)).parent
+        
+        # Check both `.venv` and `venv` folder names
+        venv_python_options = []
+        if system == "Windows":
+            venv_python_options = [
+                project_dir / ".venv" / "Scripts" / "python.exe",
+                project_dir / "venv" / "Scripts" / "python.exe"
+            ]
+        else:
+            venv_python_options = [
+                project_dir / ".venv" / "bin" / "python",
+                project_dir / "venv" / "bin" / "python"
+            ]
+            
+        venv_python = next((p for p in venv_python_options if p.exists()), None)
+        python_exec = str(venv_python) if venv_python else sys.executable
+        mcp_server_script = str(project_dir / "mcp_server.py")
+
         mcp_config = {
-            "url": f"{server_base}/mcp/sse",
-            "headers": {
-                "Authorization": f"Bearer {body.mcp_token}"
+            "command": python_exec,
+            "args": [mcp_server_script],
+            "env": {
+                "MONGO_URI": request.mongo_uri,
             }
         }
 

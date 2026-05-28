@@ -29,6 +29,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 900)
   const [mcpModalOpen, setMcpModalOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [schema, setSchema] = useState({})   // cached schema for IntentCard collections
   const chatEndRef = useRef(null)
   
@@ -323,12 +324,32 @@ function App() {
             <button className="nav-btn hide-mobile" onClick={() => setSettingsOpen(true)}>
               Settings
             </button>
-            <button className="nav-btn hide-mobile" onClick={() => setMcpModalOpen(true)} title="Connect to Claude Desktop">
-              Claude {localStorage.getItem('iq_mcp_groq_key') ? <span className="mcp-nav-dot" /> : null}
-            </button>
+            {import.meta.env.DEV && (
+              <button className="nav-btn hide-mobile" onClick={() => setMcpModalOpen(true)} title="Connect to Claude Desktop">
+                Claude {localStorage.getItem('iq_mcp_groq_key') ? <span className="mcp-nav-dot" /> : null}
+              </button>
+            )}
             <button className="nav-btn nav-btn--danger" onClick={() => setCurrentWorkspace(null)} title="Back to Dashboard">
               <span className="hide-text-mobile">Dashboard</span> <span style={{ opacity: 0.6 }}>↩</span>
             </button>
+            <div className="profile-menu-container">
+              <button className="profile-btn" onClick={() => setProfileOpen(!profileOpen)}>
+                {user?.email?.charAt(0).toUpperCase() || 'U'}
+              </button>
+              {profileOpen && (
+                <>
+                  <div className="profile-backdrop" onClick={() => setProfileOpen(false)} />
+                  <div className="profile-dropdown">
+                    <div className="profile-header">
+                      <strong>{user?.email}</strong>
+                    </div>
+                    <button className="profile-dropdown-item" onClick={handleSignOut}>
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -386,7 +407,7 @@ function App() {
       {/* MCP Connect Modal */}
       {mcpModalOpen && (
         <McpModal
-          token={token}
+          defaultMongoUri={""}
           onClose={() => setMcpModalOpen(false)}
         />
       )}

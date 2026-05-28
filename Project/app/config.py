@@ -1,8 +1,10 @@
 import os
 from functools import lru_cache
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+project_root = Path(__file__).parent.parent
+load_dotenv(project_root / ".env")
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 MONGO_URI = os.getenv("MONGO_URI")

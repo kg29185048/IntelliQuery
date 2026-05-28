@@ -16,20 +16,17 @@ from database.mongo_client import get_db
 
 router = APIRouter()
 
-# We call get_db() lazily inside functions to prevent startup crashes 
-# if MongoDB is temporarily unreachable.
+db = get_db()
+users_collection = db["users"]
+otps_collection = db["otps"]
 
-def get_users_collection():
-    return get_db()["users"]
-
-def get_otps_collection():
-    db = get_db()
-    otps_col = db["otps"]
-    try:
-        otps_col.create_index("createdAt", expireAfterSeconds=600)
-    except Exception:
-        pass
-    return otps_col
+# Create TTL index on otps collection (expires after 600 seconds = 10 minutes)
+# Note: In a production app, index creation should be handled in a startup script, 
+# but this ensures it exists.
+try:
+    otps_collection.create_index("createdAt", expireAfterSeconds=600)
+except Exception:
+    pass
 
 def generate_otp() -> str:
     return str(random.randint(100000, 999999))
@@ -45,9 +42,6 @@ def get_safe_password(pwd: str) -> bytes:
 @router.post("/send-signup-otp")
 async def send_signup_otp(data: SendSignupOtp):
     """Generates and sends an OTP for new user registration."""
-    users_collection = get_users_collection()
-    otps_collection = get_otps_collection()
-    
     # Check if user already exists
     if users_collection.find_one({"email": data.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -76,9 +70,6 @@ async def send_signup_otp(data: SendSignupOtp):
 @router.post("/signup")
 async def signup(data: SignupVerify):
     """Verifies OTP and creates the new user."""
-    users_collection = get_users_collection()
-    otps_collection = get_otps_collection()
-    
     # Check if user already exists
     if users_collection.find_one({"email": data.email}):
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -126,7 +117,6 @@ async def signup(data: SignupVerify):
 
 @router.post("/login")
 async def login(user: UserLogin):
-    users_collection = get_users_collection()
     existing_user = users_collection.find_one({"email": user.email})
 
     if not existing_user:
@@ -165,9 +155,6 @@ async def login(user: UserLogin):
 @router.post("/forgot-password")
 async def forgot_password(data: ForgotPassword):
     """Generates and sends an OTP for password reset."""
-    users_collection = get_users_collection()
-    otps_collection = get_otps_collection()
-    
     existing_user = users_collection.find_one({"email": data.email})
     if not existing_user:
         # For security reasons, don't reveal if email exists, but we can't send an email
@@ -198,9 +185,6 @@ async def forgot_password(data: ForgotPassword):
 @router.post("/reset-password")
 async def reset_password(data: ResetPassword):
     """Verifies OTP and resets the password."""
-    users_collection = get_users_collection()
-    otps_collection = get_otps_collection()
-    
     # Verify OTP
     otp_record = otps_collection.find_one({
         "email": data.email, 
@@ -235,8 +219,6 @@ async def reset_password(data: ResetPassword):
 @router.post("/google")
 async def google_auth(request: GoogleLoginRequest):
     """Verifies Google JWT token and logs in or registers the user."""
-    users_collection = get_users_collection()
-    
     client_id = os.getenv("GOOGLE_CLIENT_ID")
     if not client_id:
         raise HTTPException(status_code=500, detail="Google Login is not configured on the server.")
