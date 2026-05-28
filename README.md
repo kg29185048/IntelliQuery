@@ -14,13 +14,14 @@ IntelliQuery leverages a modern technology stack to deliver a seamless and intel
 
 ## Features
 
-- **Natural Language to Query (Mongo & SQL):** Simply type what you want to know, and the system generates the precise query, automatically routing to the correct SQL or NoSQL database.
-- **Interactive Intent Confirmation:** Smartly extracts query intents and allows users to confirm them before execution.
-- **Query Explanation & Suggestions:** Transparent insights into how the generated query works and intelligent follow-up suggestions.
-- **Smart Results & Visualization:** View database results in tabular or list formats, and automatically generate optimal chart configurations for data visualization.
-- **Multi-Tenant Workspaces:** Securely manage access via workspaces, encrypting database URIs and enforcing member-specific permissions.
-- **Claude Desktop Integration:** Includes an MCP server for seamless integration with Claude Desktop.
-- **Modern & Responsive UI:** A premium interface with query history tracking that works beautifully across all devices.
+- 🗣️ **Natural Language to Query (Mongo & SQL):** Simply type what you want to know, and the system generates the precise query, automatically routing to the correct SQL or NoSQL database.
+- 🎯 **Interactive Intent Confirmation:** Smartly extracts query intents and allows users to confirm, edit, or reject them before any execution occurs.
+- 📖 **Query Explanation & Suggestions:** Provides transparent, human-readable insights into how the generated query works, along with intelligent follow-up suggestions for continued exploration.
+- 📊 **Smart Results & Visualization:** View database results in clean tabular formats and automatically generate optimal, interactive chart configurations using AI-driven data visualization.
+- 🏢 **Multi-Tenant Workspaces & RBAC:** Securely manage access via multiple workspaces. Database URIs are encrypted via AES (Fernet), and Role-Based Access Control (RBAC) enforces member-specific permissions (e.g., Read-Only vs. Admin).
+- 🤖 **Claude Desktop Integration (Local MCP Server):** Seamlessly expose your databases to Claude Desktop using the integrated Model Context Protocol (MCP) server. Configure and run it locally to let Claude directly interact with your data.
+- 🎨 **Modern & Responsive UI:** A premium, dynamic interface with query history tracking, sleek UI elements, and a responsive design that works beautifully across all devices.
+- 🔒 **Security & Safety:** Built-in safeguards block destructive queries and ensure that read-only members cannot perform inserts, updates, or drops.
 
 ## Tech Stack
 
@@ -93,6 +94,16 @@ npm install
 npm run dev
 ```
 *The frontend will be available at `http://localhost:5173`.*
+
+### 4. Local MCP Server Setup (Claude Desktop)
+
+IntelliQuery includes a built-in Model Context Protocol (MCP) server that allows Claude Desktop to directly interact with your local databases.
+
+To configure it locally:
+1. Ensure your backend and frontend are running.
+2. In the IntelliQuery Web UI, click the **Claude** button in the top navigation bar.
+3. Enter your database URI and click **Install MCP Server**.
+4. Restart your Claude Desktop app. You will now see IntelliQuery's database tools (like `list_collections`, `run_query`) available directly inside Claude!
 
 ---
 
