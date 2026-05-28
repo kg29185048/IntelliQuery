@@ -28,9 +28,9 @@ from database.mongo_client import get_db, get_db_from_uri
 from database.sql_client import get_sql_engine
 from database.sql_schema_extractor import extract_sql_schema
 from agents.router_agent import run_pipeline, extract_intent_pipeline
-from agents.sql_agent import run_sql_pipeline
-from agents.schema_agent import get_schema
-from agents.visualization_agent import generate_visualization_config
+from nodes.sql import run_sql_pipeline
+from nodes.schema import get_schema
+from nodes.visualization import generate_visualization_config
 from mcp_server import mcp
 
 app = FastAPI(title="IntelliQuery API", version="1.0.0")

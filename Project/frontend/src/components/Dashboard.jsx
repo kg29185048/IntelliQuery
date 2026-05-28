@@ -160,7 +160,17 @@ const Dashboard = ({ user, token, onSelectWorkspace, onSignOut }) => {
                     <span className="ws-db badge outline">{ws.db_type}</span>
                   </div>
                   {ws.role === 'admin' && (
-                    <div className="ws-code">Join Code: <code>{ws.join_code}</code></div>
+                    <div className="ws-code"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           navigator.clipboard.writeText(ws.join_code);
+                           alert('Join code copied to clipboard!');
+                         }}
+                         style={{ cursor: 'pointer' }}
+                         title="Click to copy"
+                    >
+                      Join Code: <code>{ws.join_code}</code> 📋
+                    </div>
                   )}
                 </div>
               </div>

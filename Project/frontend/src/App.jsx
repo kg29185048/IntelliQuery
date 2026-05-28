@@ -366,14 +366,26 @@ function App() {
               <h3>What would you like to know?</h3>
               <p>Ask anything about your database in plain English.</p>
               <div className="example-chips">
-                {[
-                  'Show me all documents',
-                  'Count records by category',
-                  'Find top 5 by rating',
-                  'Show recent entries'
-                ].map(ex => (
-                  <button key={ex} className="chip" onClick={() => handleSend(ex)}>{ex}</button>
-                ))}
+                {(() => {
+                  const cols = Object.keys(schema)
+                  let suggestions = []
+                  if (cols.length > 0) {
+                    for (const col of cols.slice(0, 2)) {
+                      suggestions.push(`Show me all ${col}`)
+                      const fields = schema[col]
+                      if (fields && fields.length > 0) {
+                        const safeField = fields.find(f => f !== '_id') || fields[0]
+                        suggestions.push(`Count ${col} by ${safeField}`)
+                      }
+                    }
+                  }
+                  if (suggestions.length < 4) {
+                    suggestions.push('Show all documents', 'Count total records', 'Find top 5 entries', 'Show recent records')
+                  }
+                  return suggestions.slice(0, 4).map(ex => (
+                    <button key={ex} className="chip" onClick={() => handleSend(ex)}>{ex}</button>
+                  ))
+                })()}
               </div>
             </div>
           )}
