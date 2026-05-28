@@ -23,6 +23,7 @@ const Dashboard = ({ user, token, onSelectWorkspace, onSignOut }) => {
 
   const [showCreate, setShowCreate] = useState(false)
   const [showJoin, setShowJoin] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
 
   // Create Form State
   const [createForm, setCreateForm] = useState({
@@ -115,7 +116,24 @@ const Dashboard = ({ user, token, onSelectWorkspace, onSignOut }) => {
           <div className="dashboard-actions">
             <button className="btn-outline" onClick={() => setShowJoin(true)}>Join Workspace</button>
             <button className="btn-outline" onClick={() => setShowCreate(true)}>Create Workspace</button>
-            <button className="btn-outline signout-btn" onClick={onSignOut}>Sign Out</button>
+            <div className="profile-menu-container">
+              <button className="profile-btn" onClick={() => setProfileOpen(!profileOpen)}>
+                {user?.email?.charAt(0).toUpperCase() || 'U'}
+              </button>
+              {profileOpen && (
+                <>
+                  <div className="profile-backdrop" onClick={() => setProfileOpen(false)} />
+                  <div className="profile-dropdown">
+                    <div className="profile-header">
+                      <strong>{user?.email}</strong>
+                    </div>
+                    <button className="profile-dropdown-item" onClick={onSignOut}>
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -142,7 +160,17 @@ const Dashboard = ({ user, token, onSelectWorkspace, onSignOut }) => {
                     <span className="ws-db badge outline">{ws.db_type}</span>
                   </div>
                   {ws.role === 'admin' && (
-                    <div className="ws-code">Join Code: <code>{ws.join_code}</code></div>
+                    <div className="ws-code"
+                         onClick={(e) => {
+                           e.stopPropagation();
+                           navigator.clipboard.writeText(ws.join_code);
+                           alert('Join code copied to clipboard!');
+                         }}
+                         style={{ cursor: 'pointer' }}
+                         title="Click to copy"
+                    >
+                      Join Code: <code>{ws.join_code}</code> 📋
+                    </div>
                   )}
                 </div>
               </div>

@@ -25,6 +25,11 @@ Error that occurred: {error}
 Suggest 4 alternative natural language questions that ARE valid for this schema
 and would work correctly. Make them specific, clear, and directly usable.
 
+CRITICAL RULES:
+1. Do NOT hallucinate or invent collections or fields. 
+2. ONLY use the exact collection names and field names listed in the Database Schema above.
+3. If the schema is empty or you are unsure, provide generic suggestions like "Show all documents".
+
 Return ONLY valid JSON:
 {{"suggestions": ["suggestion 1", "suggestion 2", "suggestion 3", "suggestion 4"]}}"""
 

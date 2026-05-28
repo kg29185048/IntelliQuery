@@ -82,7 +82,17 @@ const WorkspaceSettings = ({ workspace, user, token, onClose, onWorkspaceDeleted
         <div className="settings-content">
           <div className="ws-details">
             <p><strong>Name:</strong> {workspace.name}</p>
-            <p><strong>Join Code:</strong> <code className="join-code">{workspace.join_code}</code></p>
+            <p><strong>Join Code:</strong> <code 
+              className="join-code"
+              onClick={() => {
+                navigator.clipboard.writeText(workspace.join_code);
+                alert('Join code copied to clipboard!');
+              }}
+              style={{ cursor: 'pointer' }}
+              title="Click to copy"
+            >
+              {workspace.join_code} 📋
+            </code></p>
             <p className="hint">Share this code with users to let them join your workspace.</p>
           </div>
 

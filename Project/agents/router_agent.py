@@ -15,13 +15,13 @@ from typing import Any, Optional
 from typing_extensions import TypedDict
 from langgraph.graph import StateGraph, END
 
-from agents.query_agent          import generate_query
-from agents.validation_agent     import validate_query, check_destructive_intent
-from agents.explanation_agent    import explain_query
-from agents.schema_agent         import get_schema
-from agents.suggestion_agent     import generate_suggestions
-from agents.relevance_agent      import check_relevance
-from agents.intent_extraction_agent import extract_intent
+from nodes.query          import generate_query
+from nodes.validation     import validate_query, check_destructive_intent
+from nodes.explanation    import explain_query
+from nodes.schema         import get_schema
+from nodes.suggestion     import generate_suggestions
+from nodes.relevance      import check_relevance
+from nodes.intent_extraction import extract_intent
 
 import datetime
 from bson import ObjectId, Decimal128
@@ -214,9 +214,16 @@ def execution_node(state: PipelineState) -> PipelineState:
             cursor = collection.find(filter_query, projection_query) if projection_query else collection.find(filter_query)
             if sort_spec:
                 # sort_spec: {"field": "x", "direction": "asc"/"desc"} or raw pymongo format
-                if isinstance(sort_spec, dict) and "field" in sort_spec:
-                    direction = -1 if sort_spec.get("direction") == "desc" else 1
-                    cursor = cursor.sort(sort_spec["field"], direction)
+                if isinstance(sort_spec, dict):
+                    if "field" in sort_spec:
+                        direction = -1 if str(sort_spec.get("direction")).lower() == "desc" else 1
+                        cursor = cursor.sort(sort_spec["field"], direction)
+                    else:
+                        sort_list = []
+                        for k, v in sort_spec.items():
+                            direction = -1 if str(v).lower() in ["desc", "-1", "descending"] else 1
+                            sort_list.append((k, direction))
+                        cursor = cursor.sort(sort_list)
                 elif isinstance(sort_spec, list):
                     cursor = cursor.sort(sort_spec)
             if limit:
@@ -274,11 +281,21 @@ def suggestion_node(state: PipelineState) -> PipelineState:
 # ===========================================================================
 # CONDITIONAL EDGE FUNCTIONS
 # ===========================================================================
+def after_schema(state: PipelineState) -> str:
+    """
+    If Phase 1 → relevance check.
+    If Phase 2 → skip relevance check, go straight to query.
+    """
+    if state.get("intent_confirmed"):
+        return "query"
+    return "relevance"
+
+
 def after_relevance(state: PipelineState) -> str:
     """
     If irrelevant → suggest.
     If intent not yet confirmed (Phase 1) → intent.
-    If intent confirmed (Phase 2) → query.
+    If intent confirmed (Phase 2) → query (fallback).
     """
     if not state.get("is_relevant", True):
         return "suggest"
@@ -317,7 +334,10 @@ def build_graph():
     graph.add_node("suggest",   suggestion_node)
 
     graph.set_entry_point("schema")
-    graph.add_edge("schema", "relevance")
+    graph.add_conditional_edges("schema", after_schema, {
+        "relevance": "relevance",
+        "query": "query"
+    })
     graph.add_conditional_edges("relevance", after_relevance, {
         "intent":  "intent",
         "query":   "query",

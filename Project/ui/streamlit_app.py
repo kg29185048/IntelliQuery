@@ -60,8 +60,8 @@ from bson import ObjectId
 
 from database.mongo_client import get_db
 from agents.router_agent import run_pipeline
-from agents.visualization_agent import generate_visualization_config
-from agents.schema_agent import get_schema
+from nodes.visualization import generate_visualization_config
+from nodes.schema import get_schema
 
 # Custom JSON encoder to handle MongoDB ObjectIds
 class MongoJSONEncoder(json.JSONEncoder):
