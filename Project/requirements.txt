@@ -16,3 +16,4 @@ pyjwt
 email-validator
 bcrypt
 google-auth
+sendgrid
