@@ -279,12 +279,22 @@ async def install_mcp(request: McpInstallRequest):
     try:
         system = platform.system()
         if system == "Windows":
+            config_paths = []
             appdata = os.environ.get("APPDATA")
-            if not appdata:
-                raise HTTPException(status_code=500, detail="APPDATA environment variable not found")
-            config_path = Path(appdata) / "Claude" / "claude_desktop_config.json"
+            if appdata:
+                config_paths.append(Path(appdata) / "Claude" / "claude_desktop_config.json")
+
+            localappdata = os.environ.get("LOCALAPPDATA")
+            if localappdata:
+                config_paths.append(Path(localappdata) / "Claude" / "claude_desktop_config.json")
+                package_matches = glob.glob(str(Path(localappdata) / "Packages" / "Claude_*" / "LocalCache" / "Roaming" / "Claude" / "claude_desktop_config.json"))
+                for match in package_matches:
+                    config_paths.append(Path(match))
+
+            if not config_paths:
+                raise HTTPException(status_code=500, detail="Could not determine Claude config path")
         elif system == "Darwin":
-            config_path = Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+            config_paths = [Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"]
         else:
             raise HTTPException(status_code=400, detail="Unsupported OS. Claude Desktop supports Windows and macOS only.")
 
@@ -316,22 +326,27 @@ async def install_mcp(request: McpInstallRequest):
             }
         }
 
-        config_path.parent.mkdir(parents=True, exist_ok=True)
-        config_data = {}
-        if config_path.exists():
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    config_data = json.load(f)
-            except json.JSONDecodeError:
-                config_data = {}
+        # Write the entry to all discovered Claude config locations
+        written_paths = []
+        for config_path in config_paths:
+            config_path.parent.mkdir(parents=True, exist_ok=True)
+            config_data = {}
+            if config_path.exists():
+                try:
+                    with open(config_path, "r", encoding="utf-8") as f:
+                        config_data = json.load(f)
+                except json.JSONDecodeError:
+                    config_data = {}
 
-        config_data.setdefault("mcpServers", {})
-        config_data["mcpServers"]["intelliquery-agent"] = mcp_config
+            config_data.setdefault("mcpServers", {})
+            config_data["mcpServers"]["intelliquery-agent"] = mcp_config
 
-        with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(config_data, f, indent=2)
+            with open(config_path, "w", encoding="utf-8") as f:
+                json.dump(config_data, f, indent=2)
 
-        return {"success": True, "config_path": str(config_path)}
+            written_paths.append(str(config_path))
+
+        return {"success": True, "config_paths": written_paths}
     except HTTPException:
         raise
     except Exception as e:

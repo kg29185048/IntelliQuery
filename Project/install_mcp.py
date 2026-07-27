@@ -2,32 +2,52 @@ import os
 import sys
 import json
 import platform
+import glob
 from pathlib import Path
 
-def get_claude_config_path():
-    """Determines the correct path for the Claude config based on the OS."""
+PROJECT_DIR = Path(__file__).resolve().parent
+
+
+def get_claude_config_paths():
+    """Determines the Claude config path(s) based on the OS and install type."""
     system = platform.system()
     if system == "Windows":
+        candidates = []
+
         appdata = os.environ.get("APPDATA")
-        if not appdata:
-            print("❌ Error: Could not find APPDATA environment variable.")
-            sys.exit(1)
-        return Path(appdata) / "Claude" / "claude_desktop_config.json"
+        if appdata:
+            candidates.append(Path(appdata) / "Claude" / "claude_desktop_config.json")
+
+        localappdata = os.environ.get("LOCALAPPDATA")
+        if localappdata:
+            candidates.append(Path(localappdata) / "Claude" / "claude_desktop_config.json")
+            package_matches = glob.glob(str(Path(localappdata) / "Packages" / "Claude_*" / "LocalCache" / "Roaming" / "Claude" / "claude_desktop_config.json"))
+            for match in package_matches:
+                candidates.append(Path(match))
+
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_paths = []
+        for path in candidates:
+            if str(path) not in seen:
+                seen.add(str(path))
+                unique_paths.append(path)
+        return unique_paths
+
     elif system == "Darwin": # macOS
-        return Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"
+        return [Path.home() / "Library" / "Application Support" / "Claude" / "claude_desktop_config.json"]
     else:
         print("❌ Error: Unsupported OS. Claude Desktop currently supports Windows and macOS.")
         sys.exit(1)
 
-def get_python_path():
+def get_python_path(project_dir: Path):
     """Finds the absolute path to the Python executable in the virtual environment."""
-    current_dir = Path.cwd()
     system = platform.system()
     
     if system == "Windows":
-        venv_python = current_dir / "venv" / "Scripts" / "python.exe"
+        venv_python = project_dir / "venv" / "Scripts" / "python.exe"
     else:
-        venv_python = current_dir / "venv" / "bin" / "python"
+        venv_python = project_dir / "venv" / "bin" / "python"
         
     if not venv_python.exists():
         print(f"⚠️ Warning: Could not find virtual environment at {venv_python}")
@@ -52,9 +72,13 @@ def main():
         sys.exit(1)
 
     # 2. Resolve Paths
-    config_path = get_claude_config_path()
-    python_exec = get_python_path()
-    mcp_server_script = str(Path.cwd() / "mcp_server.py")
+    config_paths = get_claude_config_paths()
+    if not config_paths:
+        print("❌ Error: Could not determine any Claude config path.")
+        sys.exit(1)
+
+    python_exec = get_python_path(PROJECT_DIR)
+    mcp_server_script = str(PROJECT_DIR / "mcp_server.py")
 
     # 3. Build the Configuration Block
     mcp_config = {
@@ -67,33 +91,34 @@ def main():
     }
 
     # 4. Load, Update, and Save the JSON
-    # Create the directory if Claude was just installed and hasn't made it yet
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    config_data = {}
-    if config_path.exists():
-        try:
-            with open(config_path, "r", encoding="utf-8") as f:
-                config_data = json.load(f)
-        except json.JSONDecodeError:
-            print("\n⚠️ Warning: Existing Claude config is corrupted. Starting fresh.")
-            config_data = {}
+    for config_path in config_paths:
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        config_data = {}
+        if config_path.exists():
+            try:
+                with open(config_path, "r", encoding="utf-8") as f:
+                    config_data = json.load(f)
+            except json.JSONDecodeError:
+                print(f"\n⚠️ Warning: Existing Claude config at {config_path} is corrupted. Starting fresh.")
+                config_data = {}
 
-    # Ensure the mcpServers dictionary exists
-    if "mcpServers" not in config_data:
-        config_data["mcpServers"] = {}
+        # Ensure the mcpServers dictionary exists
+        if "mcpServers" not in config_data:
+            config_data["mcpServers"] = {}
 
-    # Inject our server
-    config_data["mcpServers"]["intelliquery-agent"] = mcp_config
+        # Inject our server
+        config_data["mcpServers"]["intelliquery-agent"] = mcp_config
 
-    # Write it back to the file safely
-    with open(config_path, "w", encoding="utf-8") as f:
-        json.dump(config_data, f, indent=2)
+        # Write it back to the file safely
+        with open(config_path, "w", encoding="utf-8") as f:
+            json.dump(config_data, f, indent=2)
+
+        print(f"✅ Updated: {config_path}")
 
     # 5. Success Message
     print("\n✅ Success! IntelliQuery has been added to Claude Desktop.")
-    print(f"Config saved to: {config_path}")
-    print("\nPlease completely close and restart Claude Desktop to see the new tool.")
+    print("Please completely close and restart Claude Desktop to see the new tool.")
 
 if __name__ == "__main__":
     main()

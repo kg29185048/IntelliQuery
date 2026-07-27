@@ -1,6 +1,8 @@
 import sys
 import os
 import json
+from pathlib import Path
+from dotenv import load_dotenv
 
 if sys.stdout.encoding.lower() != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
@@ -8,7 +10,9 @@ if sys.stderr.encoding.lower() != 'utf-8':
     sys.stderr.reconfigure(encoding='utf-8')
 
 # Ensure Python can find your app/database/agents folders
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+PROJECT_DIR = Path(__file__).resolve().parent
+sys.path.append(str(PROJECT_DIR))
+load_dotenv(PROJECT_DIR / ".env")
 
 from mcp.server.fastmcp import FastMCP
 from database.mongo_client import get_db_from_uri, get_db
@@ -22,6 +26,9 @@ mcp = FastMCP("IntelliQuery LangGraph Engine")
 # 2. Connect to the Database once when the server boots
 print("Initializing Database Connection for MCP...", file=sys.stderr)
 mongo_uri = os.environ.get("MONGO_URI", "")
+if not mongo_uri:
+    print("[MCP] Warning: MONGO_URI is not set. The server will still start, but database calls will fail until it is configured.", file=sys.stderr)
+
 try:
     from urllib.parse import urlparse
     db_name = urlparse(mongo_uri).path.strip("/")
